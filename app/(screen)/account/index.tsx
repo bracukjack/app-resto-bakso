@@ -4,7 +4,7 @@ import SellerAccount from "./seller";
 import CustomerAccount from "./customer";
 
 const AccountScreen = () => {
-  const [userRole, setUserRole] = useState<"seller" | "customer">("customer");
+  const [userRole, setUserRole] = useState<"seller" | "customer">("seller");
 
   const renderAccountComponent = () => {
     if (userRole === "seller") {
