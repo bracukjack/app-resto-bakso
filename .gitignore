@@ -112,7 +112,6 @@ dist
 
 # FuseBox cache
 .fusebox/
-.DS_Store
 
 # DynamoDB Local files
 .dynamodb/
@@ -134,3 +133,5 @@ dist
 
 expo-env.d.ts
 # @end expo-cli
+
+.DS_Store
