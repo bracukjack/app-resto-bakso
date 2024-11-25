@@ -1,4 +1,5 @@
 import transactionData from "@/app/data/transactionDummy";
+import AppModal from "@/components/shared/AppModal";
 import Header from "@/components/shared/Header";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import {
@@ -20,19 +21,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const TransactionReport = () => {
   const tableHeaders = ["Buyer", "Order", "Total", "action"];
   const router = useRouter();
-
-  const [transactions, setTransactions] = useState(transactionData);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"accepted" | "rejected" | null>(
+    null
+  );
 
   const data = transactionData;
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setTransactions((prev) =>
-      prev.map((transaction) =>
-        transaction.id === id
-          ? { ...transaction, status: newStatus }
-          : transaction
-      )
-    );
+  const openModal = (type: "accepted" | "rejected") => {
+    setModalType(type);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType(null);
   };
 
   return (
@@ -116,20 +119,20 @@ const TransactionReport = () => {
                   ) : (
                     <View className="flex flex-row justify-center items-center gap-1">
                       <Button
+                        onPress={() => openModal("accepted")}
                         size="xs"
                         variant="solid"
                         action="positive"
                         className="bg-blue-500 text-white px-2 rounded"
-                        onPress={() => handleStatusChange(item.id, "acepted")}
                       >
                         <ButtonIcon as={Check} />
                       </Button>
                       <Button
+                        onPress={() => openModal("rejected")}
                         size="xs"
                         variant="solid"
                         action="negative"
                         className="bg-red-500 text-white px-2 rounded"
-                        onPress={() => handleStatusChange(item.id, "rejected")}
                       >
                         <ButtonIcon as={X} />
                       </Button>
@@ -141,6 +144,21 @@ const TransactionReport = () => {
           </TableBody>
         </Table>
       </VStack>
+
+      {showModal && (
+        <AppModal
+          showModal={showModal}
+          setShowModal={closeModal}
+          heading={modalType === "accepted" ? "TERIMA PESANAN" : "Rejected"}
+          bodyText={
+            modalType === "accepted"
+              ? "Pastikan Ketersediaan Produk & Informasi Pesanan, Klik Tombol “Lanjutkan” Untuk Menerima Pesanan"
+              : "Hubungi Pembeli Mengenai Alasan Tolak Pesanan, Klik Tombol “Lanjutkan” Untuk Menolak Pesanan"
+          }
+          onCancel={closeModal}
+          onConfirm={closeModal}
+        />
+      )}
     </SafeAreaView>
   );
 };

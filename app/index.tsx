@@ -1,12 +1,5 @@
 import { StyleSheet } from "react-native";
-
-import { Text } from "@/components/ui/text";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Center } from "@/components/ui/center";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Box } from "@/components/ui/box";
 import { View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import MyTabs from "./navigation";
 import { Colors } from "@/constants/Theme";
