@@ -1,16 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, Image, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import axios from "axios";
-import { Button, ButtonGroup, ButtonIcon, ButtonText } from "../ui/button";
+import { Button, ButtonGroup, ButtonText } from "../ui/button";
 import {
   Actionsheet,
   ActionsheetBackdrop,
   ActionsheetContent,
   ActionsheetDragIndicator,
   ActionsheetDragIndicatorWrapper,
-  ActionsheetItem,
-  ActionsheetItemText,
 } from "../ui/actionsheet";
 import { HStack } from "../ui/hstack";
 import { VStack } from "../ui/vstack";
@@ -18,25 +15,33 @@ import { Heading } from "../ui/heading";
 import { Pressable } from "../ui/pressable";
 import { UploadCloud, X } from "lucide-react-native";
 import { Box } from "../ui/box";
-// Gunakan NativeWind untuk styling
 
 interface UploadImageProps {
   mediaText: string;
   label: string;
+  onImageSelect: (
+    image: ImagePicker.ImagePickerAsset | ImagePicker.ImagePickerAsset[] | null
+  ) => void;
+  placeholder?: string;
+  multiple?: boolean;
+  style?: string;
 }
-const UploadImage = ({ label, mediaText }: UploadImageProps) => {
+
+const UploadImage: React.FC<UploadImageProps> = ({
+  label,
+  mediaText,
+  onImageSelect,
+  placeholder = "No files uploaded yet",
+  multiple = false,
+  style = "",
+}) => {
   const [showActionsheet, setShowActionsheet] = useState(false);
-  const [image, setImage] = useState<any>(null);
+  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[] | null>(
+    null
+  );
 
-  // Menutup Actionsheet
-  const handleClose = () => {
-    setShowActionsheet(false);
-  };
-
-  // Membuka Actionsheet
-  const handleOpen = () => {
-    setShowActionsheet(true);
-  };
+  const handleClose = () => setShowActionsheet(false);
+  const handleOpen = () => setShowActionsheet(true);
 
   const handlePickImage = async () => {
     const permissionResult =
@@ -53,23 +58,27 @@ const UploadImage = ({ label, mediaText }: UploadImageProps) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      allowsMultipleSelection: multiple,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0]); // Menyimpan gambar yang dipilih
+      setImages(result.assets);
+      onImageSelect(multiple ? result.assets[0] : result.assets[0]);
     }
   };
 
   const handleClearImage = () => {
-    setImage(null);
+    setImages(null);
+    onImageSelect(null);
   };
 
   return (
     <>
-      <Button onPress={handleOpen}>
-        <ButtonText>{image ? image.uri.split("/").pop() : label}</ButtonText>
+      <Button onPress={handleOpen} className={style}>
+        <ButtonText>
+          {images ? images[0]?.uri.split("/").pop() : label}
+        </ButtonText>
       </Button>
 
       <Actionsheet isOpen={showActionsheet} onClose={handleClose}>
@@ -94,9 +103,9 @@ const UploadImage = ({ label, mediaText }: UploadImageProps) => {
           </HStack>
 
           <Box className="my-[10px] items-center justify-center rounded-xl bg-background-50 border border-dashed border-outline-300 h-[130px] w-full">
-            {image ? (
+            {images ? (
               <Image
-                source={{ uri: image.uri }}
+                source={{ uri: images[0].uri }}
                 style={{ width: 62, height: 62 }}
                 resizeMode="contain"
               />
@@ -106,13 +115,11 @@ const UploadImage = ({ label, mediaText }: UploadImageProps) => {
                 className="h-[62px] w-[62px] stroke-background-200"
               />
             )}
-            {!image && (
-              <Text className="text-typography-500 mt-2">
-                No files uploaded yet
-              </Text>
-            )}
+            <Text className="text-typography-500 mt-2">
+              {images ? images[0].uri.split("/").pop() : placeholder}
+            </Text>
 
-            {image && (
+            {images && (
               <Button
                 className="w-full"
                 variant="link"
@@ -124,7 +131,6 @@ const UploadImage = ({ label, mediaText }: UploadImageProps) => {
             )}
           </Box>
 
-          {/* Button Group untuk aksi */}
           <ButtonGroup className="w-full">
             <Button className="w-full" onPress={handlePickImage}>
               <ButtonText>Browse files</ButtonText>

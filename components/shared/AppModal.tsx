@@ -19,6 +19,8 @@ interface AppModalProps {
   bodyText?: string;
   onCancel?: () => void;
   onConfirm?: () => void;
+  cancelColor?: string;
+  confirmColor?: string;
   rejectText?: string;
   confirmText?: string;
   size?: "sm" | "md" | "lg";
@@ -34,6 +36,8 @@ const AppModal: React.FC<AppModalProps> = ({
   size = "md",
   rejectText = "",
   confirmText = "",
+  cancelColor = "",
+  confirmColor = "",
 }) => {
   return (
     <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={size}>
@@ -43,7 +47,7 @@ const AppModal: React.FC<AppModalProps> = ({
           <Heading size="md" className="text-typography-950">
             {heading}
           </Heading>
-          <ModalCloseButton>
+          <ModalCloseButton onPress={() => setShowModal(false)}>
             <X
               size={24}
               className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
@@ -58,7 +62,7 @@ const AppModal: React.FC<AppModalProps> = ({
         <ModalFooter>
           <Button
             variant="outline"
-            action="secondary"
+            action={cancelColor as any}
             onPress={() => {
               setShowModal(false);
               if (onCancel) onCancel();
@@ -67,6 +71,8 @@ const AppModal: React.FC<AppModalProps> = ({
             <ButtonText>{rejectText}</ButtonText>
           </Button>
           <Button
+            variant="solid"
+            action={confirmColor as any}
             onPress={() => {
               setShowModal(false);
               if (onConfirm) onConfirm();

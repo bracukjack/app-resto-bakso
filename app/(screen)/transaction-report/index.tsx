@@ -1,7 +1,8 @@
 import transactionData from "@/app/data/transactionDummy";
 import AppModal from "@/components/shared/AppModal";
 import Header from "@/components/shared/Header";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,24 +11,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { formatRupiah } from "@/utils/formatCurrency";
 import { useRouter } from "expo-router";
-import { Check, X } from "lucide-react-native";
-import { useState } from "react";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { observer } from "mobx-react-lite";
+import ApiService from "@/service/apiService";
+import { Transaction } from "@/model/transaction";
+import { ScrollView } from "react-native";
+import { StatusOrder } from "@/constants/statusEnums";
 
-const TransactionReport = () => {
-  const tableHeaders = ["Buyer", "Order", "Total", "action"];
+const TransactionList = () => {
+  const tableHeaders = ["Buyer", "Order", "Total", "Status"];
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"accepted" | "rejected" | null>(
     null
   );
+  const [showModalConfirm, setShowModalConfirm] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const data = transactionData;
+  const fetchTransactions = async () => {
+    try {
+      const response = await ApiService.get("/transaksi");
+      const data = response.data?.data;
 
+      if (Array.isArray(data)) {
+        setTransactions(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const openModalConfirm = () => {
+    setShowModalConfirm(true);
+  };
+
+  const closeModalConfirm = () => {
+    setShowModalConfirm(false);
+  };
   const openModal = (type: "accepted" | "rejected") => {
     setModalType(type);
     setShowModal(true);
@@ -46,103 +76,94 @@ const TransactionReport = () => {
           title="Transaction Report"
         />
 
-        <Table className="w-full">
-          <TableHeader>
-            <TableRow>
-              {tableHeaders.map((header, index) => (
-                <TableHead className="text-sm p-2" key={index}>
-                  {header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={index}>
-                <TableData
-                  onPress={() =>
-                    router.push(`/transaction-report/detail/${item.id}`)
-                  }
-                  className=" text-sm font-bold text-blue-500 p-2"
-                >
-                  {item.customerName}
-                </TableData>
-                <TableData className="text-sm p-2 ">
-                  {item.products
-                    .map((product) => {
-                      const nameParts = product.name.split(" ");
-                      const initials = nameParts
-                        .map((part) => part.charAt(0).toUpperCase())
-                        .join("");
-                      return initials;
-                    })
-                    .join(", ")}{" "}
-                </TableData>
-
-                <TableData className="text-sm p-2">
-                  {formatRupiah(item.totalAmount)}
-                </TableData>
-
-                <TableData className="p-2">
-                  {item.status === "accepted" ? (
-                    <Button
-                      className="bg-green-500 text-white px-2 rounded"
-                      size="xs"
-                      variant="solid"
-                    >
-                      <ButtonText>{item.status}</ButtonText>
-                    </Button>
-                  ) : item.status === "rejected" ? (
-                    <Button
-                      className="bg-gray-400 text-white px-2 rounded"
-                      size="xs"
-                      variant="solid"
-                    >
-                      <ButtonText>{item.status}</ButtonText>
-                    </Button>
-                  ) : item.status === "completed" ? (
-                    <Button
-                      className="bg-blue-500 text-white px-2 rounded"
-                      size="xs"
-                      variant="solid"
-                    >
-                      <ButtonText>{item.status}</ButtonText>
-                    </Button>
-                  ) : item.status === "complain" ? (
-                    <Button
-                      className="bg-red-500 text-white px-2 rounded"
-                      size="xs"
-                      variant="solid"
-                    >
-                      <ButtonText>{item.status}</ButtonText>
-                    </Button>
-                  ) : (
-                    <View className="flex flex-row justify-center items-center gap-1">
-                      <Button
-                        onPress={() => openModal("accepted")}
-                        size="xs"
-                        variant="solid"
-                        action="positive"
-                        className="bg-blue-500 text-white px-2 rounded"
-                      >
-                        <ButtonIcon as={Check} />
-                      </Button>
-                      <Button
-                        onPress={() => openModal("rejected")}
-                        size="xs"
-                        variant="solid"
-                        action="negative"
-                        className="bg-red-500 text-white px-2 rounded"
-                      >
-                        <ButtonIcon as={X} />
-                      </Button>
-                    </View>
-                  )}
-                </TableData>
+        <ScrollView>
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow>
+                {tableHeaders.map((header, index) => (
+                  <TableHead className="text-sm p-2" key={index}>
+                    {header}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((item, index) => (
+                <TableRow key={index}>
+                  <TableData
+                    onPress={() =>
+                      router.push(`/transaction-report/detail/${item.id}`)
+                    }
+                    className=" text-sm font-bold text-blue-500 p-2"
+                  >
+                    {item.customerName}
+                  </TableData>
+                  <TableData className="text-sm p-2 ">
+                    {item.products
+                      .map((product) => {
+                        const nameParts = product.name.split(" ");
+                        const initials = nameParts
+                          .map((part) => part.charAt(0).toUpperCase())
+                          .join("");
+                        return initials;
+                      })
+                      .join(", ")}{" "}
+                  </TableData>
+
+                  <TableData className="text-sm p-2">
+                    {formatRupiah(item.totalAmountAfterPromo)}
+                  </TableData>
+
+                  <TableData className="p-2">
+                    {item.status === StatusOrder.Accepted ? (
+                      <Button
+                        className="bg-green-500 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    ) : item.status === StatusOrder.Rejected ? (
+                      <Button
+                        className="bg-gray-400 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    ) : item.status === StatusOrder.Completed ? (
+                      <Button
+                        className="bg-blue-500 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    ) : item.status === StatusOrder.Complaint ? (
+                      <Button
+                        className="bg-red-500 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    ) : (
+                      <Button
+                        onPress={() => openModalConfirm()}
+                        size="xs"
+                        variant="link"
+                      >
+                        <ButtonText className="font-bold text-blue-500 underline">
+                          Confirm?
+                        </ButtonText>
+                      </Button>
+                    )}
+                  </TableData>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollView>
       </VStack>
 
       {showModal && (
@@ -155,12 +176,29 @@ const TransactionReport = () => {
               ? "Pastikan Ketersediaan Produk & Informasi Pesanan, Klik Tombol “Lanjutkan” Untuk Menerima Pesanan"
               : "Hubungi Pembeli Mengenai Alasan Tolak Pesanan, Klik Tombol “Lanjutkan” Untuk Menolak Pesanan"
           }
+          rejectText="Cancel"
+          confirmText={modalType === "accepted" ? "Lanjutkan" : "Lanjutkan"}
           onCancel={closeModal}
           onConfirm={closeModal}
+        />
+      )}
+
+      {showModalConfirm && (
+        <AppModal
+          showModal={showModalConfirm}
+          setShowModal={closeModalConfirm}
+          heading={"Confirm Order"}
+          bodyText={"Confirm Order, Terima atau tolak pesanan ini?"}
+          rejectText="rejected"
+          confirmText={"accepted"}
+          confirmColor="positive"
+          cancelColor="negative"
+          onCancel={() => openModal("rejected")}
+          onConfirm={() => openModal("accepted")}
         />
       )}
     </SafeAreaView>
   );
 };
 
-export default TransactionReport;
+export default TransactionList;

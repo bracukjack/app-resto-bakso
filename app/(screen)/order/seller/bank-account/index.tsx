@@ -9,7 +9,6 @@ const BankAccount = () => {
   return (
     <SafeAreaView>
       <VStack space="xl" className="p-5">
-        <Header title="Edit Bank Account" />
         <Input className=" border focus:border-cyan-600">
           <InputField
             className="py-2"

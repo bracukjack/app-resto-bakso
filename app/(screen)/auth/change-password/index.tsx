@@ -6,12 +6,63 @@ import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import ApiService from "@/service/apiService";
+import { RootState } from "@/store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { ArrowLeftIcon } from "lucide-react-native";
+import { useState } from "react";
+import { Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
 
 const ChangePasswordScreen = () => {
   const router = useRouter();
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setError(null); // Reset error
+    setLoading(true);
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        setError("User not authenticated.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await ApiService.put(
+        "/change-password",
+        {
+          new_password: newPassword,
+          confirm_new_password: confirmNewPassword,
+        },
+        token
+      );
+
+      if (response.status === 200) {
+        // Handle success, misalnya redirect ke halaman profile
+        alert("Password changed successfully!");
+      } else {
+        console.log("Failed to change password:");
+      }
+    } catch (error) {
+      setError("An error occurred while changing password.");
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView>
@@ -25,15 +76,28 @@ const ChangePasswordScreen = () => {
             <Heading className="leading-[30px]">Set new password</Heading>
           </VStack>
           <VStack space="xl" className="py-2">
-            <Input>
-              <InputField className="py-2" placeholder="New password" />
+            <Input className="border focus:border-cyan-600">
+              <InputField
+                className="py-2 lowercase"
+                type="text"
+                placeholder="New Password"
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
             </Input>
-            <Input>
-              <InputField className="py-2" placeholder="Confirm new password" />
+            <Input className="border focus:border-cyan-600">
+              <InputField
+                className="py-2 lowercase"
+                type="text"
+                placeholder="Confirm Password"
+                value={confirmNewPassword}
+                onChangeText={setConfirmNewPassword}
+              />
             </Input>
           </VStack>
+
           <VStack space="lg" className="pt-4">
-            <Button size="sm">
+            <Button size="sm" onPress={handleChangePassword}>
               <ButtonText>Submit</ButtonText>
             </Button>
             <Box className="flex flex-row">

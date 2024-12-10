@@ -32,7 +32,7 @@ const RecapitulationReportDetail = () => {
     <SafeAreaView>
       <VStack className="p-5">
         <Header
-          onBack={() => router.push("/(screen)/transaction-report")}
+          onBack={() => router.push("/(screen)/recapitulation-report")}
           title="Recapitulation Report Detail"
         />
         <View className="flex flex-row gap-1 justify-between items-center mb-5">

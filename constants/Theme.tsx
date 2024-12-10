@@ -11,7 +11,7 @@ export const Colors = {
   silver: "#F1F1F1",
   darkSilver: "#D7D7D7",
   grey: "#939393",
-  background: "#EFEFEF",
+  background: "#FFFFFF",
   transparent: "rgba(0,0,0,0)",
 } as const;
 

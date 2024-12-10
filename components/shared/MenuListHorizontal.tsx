@@ -11,8 +11,8 @@ type MenuListHProps = {
   image?: string;
   title?: string;
   price?: number;
-  id: string;
-  onQtyChange: (id: string, qty: number) => void;
+  id: number;
+  onQtyChange: (id: number, qty: number) => void;
 };
 
 const MenuListH: React.FC<MenuListHProps> = ({
@@ -46,7 +46,7 @@ const MenuListH: React.FC<MenuListHProps> = ({
           <Image
             className="rounded-lg shadow-md"
             size="lg"
-            source={image}
+            source={{ uri: image }}
             alt="menu image"
           />
           <View className="flex flex-col gap-2">

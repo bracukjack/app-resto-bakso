@@ -1,5 +1,6 @@
 import transactionData from "@/app/data/transactionDummy";
 import Header from "@/components/shared/Header";
+import { Alert, AlertText } from "@/components/ui/alert";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
 import { Grid, GridItem } from "@/components/ui/grid";
@@ -15,11 +16,14 @@ import {
 } from "@/components/ui/table";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { Transaction } from "@/model/transaction";
+import ApiService from "@/service/apiService";
 import { formatRupiah } from "@/utils/formatCurrency";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { Printer } from "lucide-react-native";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Linking, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const TransactionReportDetail = () => {
@@ -29,12 +33,40 @@ const TransactionReportDetail = () => {
   const route = useRoute<RouteProp<{ params: { id: string } }, "params">>();
   const { id } = route.params;
 
-  const transaction = transactionData.find((item) => item.id === id);
-  const totalQty =
-    transaction?.products?.reduce(
-      (sum: number, product: any) => sum + product.qty,
-      0
-    ) || 0;
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePrint = async () => {
+    const fileUrl = `https://resto-bakso.redseal.cloud/api/v1/invoice/${transaction?.transactionNumber}`;
+    const supported = await Linking.canOpenURL(fileUrl);
+    if (supported) {
+      Linking.openURL(fileUrl);
+    } else {
+      <Alert className="alert">
+        <AlertText>Cannot open this URL.</AlertText>
+      </Alert>;
+    }
+  };
+
+  const fetchTransactionById = async (id: string) => {
+    try {
+      const response = await ApiService.get(`/transaksi/${id}`);
+      const data = response.data?.data;
+
+      if (data) {
+        setTransaction(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch transaction by ID:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchTransactionById(id);
+    }
+  }, [id]);
 
   return (
     <SafeAreaView>
@@ -77,7 +109,9 @@ const TransactionReportDetail = () => {
             <TableFooter>
               <TableRow>
                 <TableHead className="p-2 text-red-500">Total</TableHead>
-                <TableHead className="p-2 text-red-500">{totalQty}</TableHead>
+                <TableHead className="p-2 text-red-500">
+                  {transaction?.totalAmount}
+                </TableHead>
                 <TableHead className="p-2 text-red-500">
                   {formatRupiah(transaction?.totalAmount || 0)}
                 </TableHead>
@@ -86,17 +120,19 @@ const TransactionReportDetail = () => {
           </Table>
         </View>
         <Text className="text-lg font-bold mb-5 mt-5">
-          Adress : {transaction?.address}
+          Adress : {transaction?.customerAddress}
         </Text>
 
         <HStack className="flex flex-row gap-5 ">
-          <Button disabled variant="solid" className="bg-cyan-600">
-            <ButtonText> {transaction?.deliveryMethod}</ButtonText>
-          </Button>
+          {transaction?.deliveryMethod === "delivery" && (
+            <Button disabled variant="solid" className="bg-cyan-600">
+              <ButtonText> {transaction?.deliveryMethod}</ButtonText>
+            </Button>
+          )}
 
-          {transaction?.promoCode && (
+          {transaction?.promo && transaction?.deliveryMethod === "delivery" && (
             <Button disabled variant="solid" action="positive">
-              <ButtonText> {transaction?.promoCode}</ButtonText>
+              <ButtonText> Free Delivery </ButtonText>
             </Button>
           )}
         </HStack>
@@ -120,10 +156,15 @@ const TransactionReportDetail = () => {
           <ButtonText> COMPLETED </ButtonText>
         </Button>
 
-        <Button variant="solid" action="positive" className="mt-5">
-          <ButtonText> PRINT </ButtonText>
-          <ButtonIcon as={Printer} />
+        <Button
+          size="lg"
+          className="mt-5 flex-row items-center bg-blue-500 rounded-md"
+          onPress={handlePrint}
+        >
+          <Printer size={20} color="#fff" />
+          <Text className="text-white ml-2">PRINT</Text>
         </Button>
+        {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
       </VStack>
     </SafeAreaView>
   );

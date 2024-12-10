@@ -1,4 +1,5 @@
 import transactionData from "@/app/data/transactionDummy";
+import AppModal from "@/components/shared/AppModal";
 import Header from "@/components/shared/Header";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
@@ -15,10 +16,13 @@ import {
 } from "@/components/ui/table";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { Transaction } from "@/model/transaction";
+import ApiService from "@/service/apiService";
 import { formatRupiah } from "@/utils/formatCurrency";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { Printer } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -28,13 +32,40 @@ const TransactionReportDetail = () => {
 
   const route = useRoute<RouteProp<{ params: { id: string } }, "params">>();
   const { id } = route.params;
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"accepted" | "rejected" | null>(
+    null
+  );
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
 
-  const transaction = transactionData.find((item) => item.id === id);
-  const totalQty =
-    transaction?.products?.reduce(
-      (sum: number, product: any) => sum + product.qty,
-      0
-    ) || 0;
+  const fetchTransactionById = async (id: string) => {
+    try {
+      const response = await ApiService.get(`/transaksi/${id}`);
+      const data = response.data?.data;
+
+      if (data) {
+        setTransaction(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch transaction by ID:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchTransactionById(id);
+    }
+  }, [id]);
+
+  const openModal = (type: "accepted" | "rejected") => {
+    setModalType(type);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType(null);
+  };
 
   return (
     <SafeAreaView>
@@ -77,7 +108,7 @@ const TransactionReportDetail = () => {
             <TableFooter>
               <TableRow>
                 <TableHead className="p-2 text-red-500">Total</TableHead>
-                <TableHead className="p-2 text-red-500">{totalQty}</TableHead>
+                <TableHead className="p-2 text-red-500">{}</TableHead>
                 <TableHead className="p-2 text-red-500">
                   {formatRupiah(transaction?.totalAmount || 0)}
                 </TableHead>
@@ -86,7 +117,7 @@ const TransactionReportDetail = () => {
           </Table>
         </View>
         <Text className="text-lg font-bold mb-5 mt-5">
-          Adress : {transaction?.address}
+          Adress : {transaction?.customerName}
         </Text>
 
         <HStack className="flex flex-row gap-5 ">
@@ -94,9 +125,9 @@ const TransactionReportDetail = () => {
             <ButtonText> {transaction?.deliveryMethod}</ButtonText>
           </Button>
 
-          {transaction?.promoCode && (
+          {transaction?.promo && (
             <Button disabled variant="solid" action="positive">
-              <ButtonText> {transaction?.promoCode}</ButtonText>
+              <ButtonText> {transaction?.promo}</ButtonText>
             </Button>
           )}
         </HStack>
@@ -119,13 +150,21 @@ const TransactionReportDetail = () => {
         {transaction?.status === "new" && (
           <Grid className="w-full gap-2" _extra={{ className: "grid-cols-2" }}>
             <GridItem _extra={{ className: "col-span-1" }}>
-              <Button variant="solid" action="positive">
+              <Button
+                onPress={() => openModal("accepted")}
+                variant="solid"
+                action="positive"
+              >
                 <ButtonText> TERIMA </ButtonText>
               </Button>
             </GridItem>
 
             <GridItem _extra={{ className: "col-span-1" }}>
-              <Button variant="solid" action="negative">
+              <Button
+                onPress={() => openModal("rejected")}
+                variant="solid"
+                action="negative"
+              >
                 <ButtonText> TOLAK </ButtonText>
               </Button>
             </GridItem>
@@ -161,6 +200,23 @@ const TransactionReportDetail = () => {
           <ButtonIcon as={Printer} />
         </Button>
       </VStack>
+
+      {showModal && (
+        <AppModal
+          showModal={showModal}
+          setShowModal={closeModal}
+          heading={modalType === "accepted" ? "TERIMA PESANAN" : "Rejected"}
+          bodyText={
+            modalType === "accepted"
+              ? "Pastikan Ketersediaan Produk & Informasi Pesanan, Klik Tombol “Lanjutkan” Untuk Menerima Pesanan"
+              : "Hubungi Pembeli Mengenai Alasan Tolak Pesanan, Klik Tombol “Lanjutkan” Untuk Menolak Pesanan"
+          }
+          rejectText="Cancel"
+          confirmText={modalType === "accepted" ? "Lanjutkan" : "Lanjutkan"}
+          onCancel={closeModal}
+          onConfirm={closeModal}
+        />
+      )}
     </SafeAreaView>
   );
 };
