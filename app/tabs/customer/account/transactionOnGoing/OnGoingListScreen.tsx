@@ -82,7 +82,9 @@ const OnGoingListScreen = () => {
                         })
                       }
                     >
-                      {item.customerName}
+                      <Text className="font-bold text-blue-500">
+                        {item.customerName}
+                      </Text>
                     </Pressable>
                   </TableData>
                   <TableData className="text-sm p-2 ">

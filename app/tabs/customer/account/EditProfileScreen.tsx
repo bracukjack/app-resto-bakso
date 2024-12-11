@@ -96,7 +96,7 @@ const EditProfileScreen = () => {
   }, [token]);
 
   return (
-    <SafeAreaView>
+    <>
       <VStack space="xl" className="p-5">
         <Input className=" border focus:border-cyan-600">
           <InputField
@@ -160,7 +160,7 @@ const EditProfileScreen = () => {
           <ButtonText>Submit</ButtonText>
         </Button>
       </VStack>
-    </SafeAreaView>
+    </>
   );
 };
 

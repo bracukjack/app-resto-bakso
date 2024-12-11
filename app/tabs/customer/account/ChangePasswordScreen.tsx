@@ -1,28 +1,27 @@
+import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import Header from "@/components/shared/Header";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import ApiService from "@/service/apiService";
-import { RootState } from "@/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useRouter } from "expo-router";
 import { ArrowLeftIcon } from "lucide-react-native";
 import { useState } from "react";
 import { Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useDispatch, useSelector } from "react-redux";
 
 const ChangePasswordScreen = () => {
-  const router = useRouter();
-
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmNewPassword) {
@@ -50,9 +49,14 @@ const ChangePasswordScreen = () => {
         token
       );
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         // Handle success, misalnya redirect ke halaman profile
-        alert("Password changed successfully!");
+        Alert.alert("Sukses", "Password berhasil diupdate!", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("CustomerAccount"),
+          },
+        ]);
       } else {
         console.log("Failed to change password:");
       }
@@ -65,20 +69,16 @@ const ChangePasswordScreen = () => {
   };
 
   return (
-    <SafeAreaView>
+    <>
       <Center>
         <Box className="p-5 w-full">
-          <Header
-            onBack={() => router.push("/(screen)/account")}
-            title="Change Password"
-          />
           <VStack className="pb-4" space="xs">
             <Heading className="leading-[30px]">Set new password</Heading>
           </VStack>
           <VStack space="xl" className="py-2">
             <Input className="border focus:border-cyan-600">
               <InputField
-                className="py-2 lowercase"
+                className="py-2"
                 type="text"
                 placeholder="New Password"
                 value={newPassword}
@@ -87,7 +87,7 @@ const ChangePasswordScreen = () => {
             </Input>
             <Input className="border focus:border-cyan-600">
               <InputField
-                className="py-2 lowercase"
+                className="py-2"
                 type="text"
                 placeholder="Confirm Password"
                 value={confirmNewPassword}
@@ -100,21 +100,10 @@ const ChangePasswordScreen = () => {
             <Button size="sm" onPress={handleChangePassword}>
               <ButtonText>Submit</ButtonText>
             </Button>
-            <Box className="flex flex-row">
-              <Button
-                onPress={() => router.back()}
-                variant="link"
-                size="sm"
-                className="p-0"
-              >
-                <ButtonIcon className="mr-1" size="md" as={ArrowLeftIcon} />
-                <ButtonText>Back</ButtonText>
-              </Button>
-            </Box>
           </VStack>
         </Box>
       </Center>
-    </SafeAreaView>
+    </>
   );
 };
 

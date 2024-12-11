@@ -7,7 +7,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 
 export type RootStackParamList = {
-  Login: undefined;
   // Customer Account Screens
   EditProfile: undefined;
   ChangePassword: undefined;
@@ -31,10 +30,11 @@ export type RootStackParamList = {
   SellerAccount: undefined;
   TransactionList: undefined;
   TransactionDetail: { transactionId: number };
-  RecapitulationList: { recapitulationId: number };
-  RecapitulationDetail: undefined;
+  RecapitulationList: undefined;
+  RecapitulationDetail: { recapitulationDate: string };
 
   Tabs: undefined;
+  Login: undefined;
   Register: undefined;
 };
 
@@ -43,22 +43,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AuthNavigator = () => {
   // const isAuthenticated = false;
-  const { token } = useSelector((state: RootState) => state.auth);
-
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {token ? (
-        <Stack.Screen name="Tabs" component={TabNavigator} />
-      ) : (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen
-            name="Register"
-            component={RegisterScreen}
-            options={{ headerShown: true, title: "Register" }}
-          />
-        </>
-      )}
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{ headerShown: true, title: "Register" }}
+      />
     </Stack.Navigator>
   );
 };

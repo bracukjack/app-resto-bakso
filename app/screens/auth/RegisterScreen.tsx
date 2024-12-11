@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/select";
 import ApiService from "@/service/apiService";
 import kabupatenBali from "@/app/data/kabupaten";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 
 const RegisterScreen = () => {
-  const router = useRouter();
-
   const [nama, setNama] = useState("");
   const [alamat, setAlamat] = useState("");
   const [kabupaten, setKabupaten] = useState("");
@@ -37,6 +38,7 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleState = () => {
     setShowPassword((showState) => {
@@ -62,7 +64,7 @@ const RegisterScreen = () => {
           [
             {
               text: "OK",
-              onPress: () => router.push("/(screen)/auth/login"),
+              onPress: () => navigation.navigate("Login"),
             },
           ]
         );
@@ -95,7 +97,6 @@ const RegisterScreen = () => {
               <Input className="border focus:border-cyan-600">
                 <InputField
                   className="py-2"
-                  type="text"
                   placeholder="Nama"
                   value={nama}
                   onChangeText={setNama}
@@ -105,7 +106,6 @@ const RegisterScreen = () => {
               <Input className="border focus:border-cyan-600">
                 <InputField
                   className="py-2"
-                  type="text"
                   placeholder="Alamat"
                   value={alamat}
                   onChangeText={setAlamat}
@@ -133,7 +133,6 @@ const RegisterScreen = () => {
               <Input className="border focus:border-cyan-600">
                 <InputField
                   className="py-2"
-                  type="text"
                   placeholder="Nomor Telepon"
                   value={telepon}
                   onChangeText={setTelepon}
@@ -143,7 +142,6 @@ const RegisterScreen = () => {
               <Input className="border focus:border-cyan-600">
                 <InputField
                   className="py-2 lowercase"
-                  type="text"
                   placeholder="Email"
                   value={email}
                   onChangeText={setEmail}

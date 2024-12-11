@@ -5,9 +5,9 @@ import OnGoingDetailScreen from "@/app/tabs/customer/account/transactionOnGoing/
 import CompletedListScreen from "@/app/tabs/customer/account/transactionCompleted/CompleteListScreen";
 import CompletedDetailScreen from "@/app/tabs/customer/account/transactionCompleted/CompletedDetailScreen";
 import { RootStackParamList } from "../AuthNavigator";
-import ChangePasswordScreen from "@/app/screens/auth/ChangePasswordScreen";
 import EditProfileScreen from "@/app/tabs/customer/account/EditProfileScreen";
 import CustomerAccountScreen from "@/app/tabs/customer/account/CustomerAccountScreen";
+import ChangePasswordScreen from "@/app/tabs/customer/account/ChangePasswordScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

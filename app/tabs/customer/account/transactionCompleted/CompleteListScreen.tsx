@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { StatusOrder } from "@/constants/statusEnums";
 import { Transaction } from "@/model/transaction";
@@ -56,7 +57,7 @@ const CompleteListScreen = () => {
   }, []);
 
   return (
-    <SafeAreaView>
+    <>
       <VStack className="p-5">
         <ScrollView>
           <Table className="w-full">
@@ -80,8 +81,10 @@ const CompleteListScreen = () => {
                         })
                       }
                     >
-                      {item.customerName}
-                    </Pressable>{" "}
+                      <Text className="font-bold text-blue-500">
+                        {item.customerName}
+                      </Text>
+                    </Pressable>
                   </TableData>
                   <TableData className="text-sm p-2 ">
                     {item.products
@@ -100,13 +103,23 @@ const CompleteListScreen = () => {
                   </TableData>
 
                   <TableData className="p-2">
-                    <Button
-                      className="bg-blue-500 text-white px-2 rounded"
-                      size="xs"
-                      variant="solid"
-                    >
-                      <ButtonText>{item.status}</ButtonText>
-                    </Button>
+                    {item.status === StatusOrder.Completed ? (
+                      <Button
+                        className="bg-blue-500 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    ) : (
+                      <Button
+                        className="bg-red-500 text-white px-2 rounded"
+                        size="xs"
+                        variant="solid"
+                      >
+                        <ButtonText>{item.status}</ButtonText>
+                      </Button>
+                    )}
                   </TableData>
                 </TableRow>
               ))}
@@ -114,7 +127,7 @@ const CompleteListScreen = () => {
           </Table>
         </ScrollView>
       </VStack>
-    </SafeAreaView>
+    </>
   );
 };
 

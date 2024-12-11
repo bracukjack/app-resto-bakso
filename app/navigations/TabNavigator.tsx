@@ -11,6 +11,8 @@ import { RootStackParamList } from "./AuthNavigator";
 import CustomerAccountStack from "./stacks/CustomerAccountStack";
 import SellerAccountStack from "./stacks/SellerAccountStack";
 import SellerOrderStack from "./stacks/SellerOrderStack";
+import CustomerOrderStack from "./stacks/CustomerOrderStack";
+import { Home, User2 } from "lucide-react-native";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
@@ -50,8 +52,14 @@ const TabNavigator = () => {
         <>
           <Tab.Screen
             name="CustomerOrder"
-            component={CustomerOrderScreen}
+            component={CustomerOrderStack}
             options={{
+              tabBarIcon: ({ focused, color, size }) => (
+                <Home size={16} color={focused ? "blue" : "gray"} />
+              ),
+              tabBarLabelStyle: {
+                fontSize: 12,
+              },
               tabBarLabel: "Order",
             }}
           />
@@ -59,6 +67,12 @@ const TabNavigator = () => {
             name="CustomerAccount"
             component={CustomerAccountStack}
             options={{
+              tabBarIcon: ({ focused, color, size }) => (
+                <User2 size={16} color={focused ? "blue" : "gray"} />
+              ),
+              tabBarLabelStyle: {
+                fontSize: 12,
+              },
               tabBarLabel: "Account",
               headerShown: false,
             }}
@@ -70,7 +84,12 @@ const TabNavigator = () => {
             name="SellerOrder"
             component={SellerOrderStack}
             options={{
-              tabBarLabel: "Order",
+              tabBarIcon: ({ focused, color, size }) => (
+                <Home size={16} color={focused ? "blue" : "gray"} />
+              ),
+              tabBarLabelStyle: {
+                fontSize: 12,
+              },
               headerShown: false,
             }}
           />
@@ -78,7 +97,14 @@ const TabNavigator = () => {
             name="SellerAccount"
             component={SellerAccountStack}
             options={{
+              tabBarIcon: ({ focused, color, size }) => (
+                <User2 size={16} color={focused ? "blue" : "gray"} />
+              ),
+              tabBarLabelStyle: {
+                fontSize: 12,
+              },
               tabBarLabel: "Account",
+              headerShown: false,
             }}
           />
         </>

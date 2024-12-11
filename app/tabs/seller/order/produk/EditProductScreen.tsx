@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Alert, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import ApiService from "@/service/apiService";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 
 type EditProductProps = NativeStackScreenProps<
   RootStackParamList,
@@ -23,54 +25,31 @@ const EditProductScreen = ({ route }: EditProductProps) => {
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [productStok, setProductStok] = useState("");
-  const [productImage, setProductImage] = useState<File | null>(null); // For image file
   const { token } = useSelector((state: RootState) => state.auth);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const fetchProduct = async (id: number) => {
     try {
-      const response = await ApiService.get(`/produk/${id}`);
+      const response = await ApiService.get(`/produk/${productId}`);
       const data = response.data?.data;
 
       if (data) {
         setProducts(data);
-        setProductName(data.name); // Assuming 'name' field in response
-        setProductPrice(data.price?.toString()); // Assuming 'price' field in response
-        setProductStok(data.stock?.toString()); // Assuming 'stock' field in response
-        setProductImage(data.image); // Assuming 'image' field in response
+        setProductName(data.nama_produk); // Assuming 'name' field in response
+        setProductPrice(data.harga?.toString()); // Assuming 'price' field in response
+        setProductStok(data.stok?.toString()); // Assuming 'stock' field in response
       }
     } catch (error) {
       console.error("Error fetching product:", error);
     }
   };
 
-  const handleImageUpload = async () => {
-    // Logic to upload an image
-    const formData = new FormData();
-    if (productImage) {
-      formData.append("image", productImage);
-
-      try {
-        const response = await ApiService.post(
-          `/produk/upload-image/${productId}`,
-          formData
-        );
-        return response.data?.data?.imageUrl; // Assuming API returns the uploaded image URL
-      } catch (error) {
-        console.error("Error uploading image:", error);
-      }
-    }
-    return null;
-  };
-
   const handleSubmit = async () => {
     try {
-      const imageUrl = await handleImageUpload();
-
       const payload = {
         nama_produk: productName,
         harga: parseFloat(productPrice), // Ensure number format
         stok: parseInt(productStok, 10), // Ensure integer format
-        gambar: imageUrl || productImage, // Use uploaded image URL or existing
       };
 
       const response = await ApiService.put(
@@ -80,6 +59,12 @@ const EditProductScreen = ({ route }: EditProductProps) => {
       );
       if (response.status === 200 || response.status === 201) {
         console.log("Product updated successfully!");
+        Alert.alert("Sukses", "Produt berhasil diupdate!", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("SellerOrder"),
+          },
+        ]);
       } else {
         console.error("Failed to update product:", response.data);
       }
@@ -123,12 +108,12 @@ const EditProductScreen = ({ route }: EditProductProps) => {
         />
       </Input>
 
-      <UploadMedia
+      {/* <UploadMedia
         mediaText="Upload Bukti Promo Untuk Mendapatkan CASHBACK FREE ONGKIR "
         label="Add Bukti Promo"
         onImageSelect={(image) => console.log("Selected Image:", image)}
         placeholder="No image uploaded"
-      />
+      /> */}
 
       <Button onPress={handleSubmit} className="bg-cyan-600" size="sm">
         <ButtonText>Submit</ButtonText>

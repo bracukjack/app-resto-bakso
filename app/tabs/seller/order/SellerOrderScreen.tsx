@@ -1,3 +1,4 @@
+import menuData from "@/app/data/menuDummy";
 import ongkirData from "@/app/data/ongkirDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import MenuList from "@/components/shared/MenuList";
@@ -23,7 +24,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useRouter } from "expo-router";
 import { Edit, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SellerOrderScreen = () => {
@@ -117,22 +118,19 @@ const SellerOrderScreen = () => {
           <Box className="flex flex-col gap-5">
             <View>
               <View className="flex flex-row items-center justify-between">
-                <Text className="text-black mb-3 text-3xl font-bold">
-                  KELOLA PRODUK
+                <Text className="text-black mb-3 text-2xl font-bold">
+                  Kelola Produk
                 </Text>
-                <Button action="positive" variant="link">
-                  <ButtonText>Add</ButtonText>
-                  <ButtonIcon as={Plus} />
-                </Button>
               </View>
 
-              <Grid className="gap-1" _extra={{ className: "grid-cols-4" }}>
+              <Grid className="" _extra={{ className: "grid-cols-4" }}>
                 {menu.map((item, index) => (
                   <GridItem _extra={{ className: "w-fit " }} key={index}>
                     <MenuList
                       image={item.gambar_url}
                       title={item.nama_produk}
                       price={item.harga}
+                      stok={item.stok}
                       onPress={() =>
                         navigation.navigate("EditProduct", {
                           productId: item.id,
@@ -146,8 +144,8 @@ const SellerOrderScreen = () => {
 
             <View>
               <View className="flex flex-row items-center justify-between">
-                <Text className="text-black mb-3 text-3xl font-bold">
-                  KELOLA Delivery
+                <Text className="text-black mb-3 text-2xl font-bold">
+                  Kelola Delivery
                 </Text>
                 <Button
                   onPress={() => navigation.navigate("CreateDelivery", {})}
@@ -159,9 +157,13 @@ const SellerOrderScreen = () => {
                 </Button>
               </View>
 
-              <Grid className="gap-3" _extra={{ className: "grid-cols-2" }}>
+              <Grid _extra={{ className: "grid-cols-2" }}>
                 {delivery.map((item, index) => (
-                  <GridItem _extra={{ className: "w-fit" }} key={index}>
+                  <GridItem
+                    className="p-1"
+                    _extra={{ className: "w-fit" }}
+                    key={index}
+                  >
                     <Pressable
                       onPress={() =>
                         navigation.navigate("CreateDelivery", {
@@ -177,21 +179,27 @@ const SellerOrderScreen = () => {
                   </GridItem>
                 ))}
               </Grid>
+            </View>
+
+            {/* <View>
+              <Text className="text-black mb-3 text-2xl font-bold">
+                Kelola Promo Code
+              </Text>
               <Button
                 onPress={() => navigation.navigate("EditPromo")}
                 size="xl"
                 variant="outline"
-                className="bg-slate-300 border border-cyan-500 rounded-2xl mt-5 shadow-sm"
+                className="bg-slate-300 border border-cyan-500 rounded-2xl shadow-sm"
               >
                 <ButtonText className=" flex flex-col items-center justify-center text-md italic	">
                   {promo[0]?.syarat_promo}
                 </ButtonText>
               </Button>
-            </View>
+            </View> */}
 
             <View>
-              <Text className="text-black  mb-3 text-3xl font-bold">
-                KELOLA TRANSFER
+              <Text className="text-black mb-3 text-2xl font-bold">
+                Kelola Transfer
               </Text>
 
               <Card className="bg-slate-300 border w-full flex gap-3 border-cyan-500 rounded-2xl shadow-sm">
@@ -221,7 +229,7 @@ const SellerOrderScreen = () => {
               </Card>
             </View>
           </Box>
-          <View style={{ height: 100 }}>
+          <View style={{ height: 200 }}>
             <Divider />
           </View>
         </ScrollView>

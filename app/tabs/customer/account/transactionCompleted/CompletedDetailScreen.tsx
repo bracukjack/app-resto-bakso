@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { StatusOrder } from "@/constants/statusEnums";
 import { Transaction } from "@/model/transaction";
 import ApiService from "@/service/apiService";
 import { formatRupiah } from "@/utils/formatCurrency";
@@ -75,7 +76,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
   }, [transactionId]);
 
   return (
-    <SafeAreaView>
+    <>
       <VStack className="p-5">
         <View className="flex flex-col gap-1 justify-start items-start mb-5">
           <Text className="text-blue-500 font-bold text-lg">
@@ -126,11 +127,9 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </Text>
 
         <HStack className="flex flex-row gap-5 ">
-          {transaction?.deliveryMethod === "delivery" && (
-            <Button disabled variant="solid" className="bg-cyan-600">
-              <ButtonText> {transaction?.deliveryMethod}</ButtonText>
-            </Button>
-          )}
+          <Button disabled variant="solid" className="bg-cyan-600">
+            <ButtonText> {transaction?.deliveryMethod}</ButtonText>
+          </Button>
 
           {transaction?.promo && transaction?.deliveryMethod === "delivery" && (
             <Button disabled variant="solid" action="positive">
@@ -154,9 +153,17 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
           </Text>
         </View>
 
-        <Button disabled variant="solid" className="bg-blue-500">
-          <ButtonText> COMPLETED </ButtonText>
-        </Button>
+        {transaction?.status === StatusOrder.Completed && (
+          <Button disabled variant="solid" className="bg-blue-500">
+            <ButtonText> SELESAI </ButtonText>
+          </Button>
+        )}
+
+        {transaction?.status === StatusOrder.Complaint && (
+          <Button disabled variant="solid" className="bg-red-500">
+            <ButtonText> KOMPLIN </ButtonText>
+          </Button>
+        )}
 
         <Button
           size="lg"
@@ -168,7 +175,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </Button>
         {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
       </VStack>
-    </SafeAreaView>
+    </>
   );
 };
 

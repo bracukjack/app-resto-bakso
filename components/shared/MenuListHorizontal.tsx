@@ -12,6 +12,7 @@ type MenuListHProps = {
   title?: string;
   price?: number;
   id: number;
+  stok?: number;
   onQtyChange: (id: number, qty: number) => void;
 };
 
@@ -20,14 +21,17 @@ const MenuListH: React.FC<MenuListHProps> = ({
   title,
   price,
   id,
+  stok,
   onQtyChange,
 }) => {
   const [qty, setQty] = useState<number>(0);
 
   const increment = () => {
-    const newQty = qty + 1;
-    setQty(newQty);
-    onQtyChange(id, newQty);
+    if (stok !== undefined && qty < stok) {
+      const newQty = qty + 1;
+      setQty(newQty);
+      onQtyChange(id, newQty);
+    }
   };
 
   const decrement = () => {
@@ -41,7 +45,13 @@ const MenuListH: React.FC<MenuListHProps> = ({
   const total = price ? price * qty : 0;
   return (
     <View>
-      <Card className="flex flex-row gap-5 w-full justify-between bg-transparent p-1 pb-3 items-center  border-b border-gray-300">
+      <Card
+        className={
+          stok === 0
+            ? `disable opacity-60 flex flex-row gap-5 w-full justify-between bg-transparent p-1 pb-3 items-center  border-b border-gray-300`
+            : `flex flex-row gap-5 w-full justify-between bg-transparent p-1 pb-3 items-center  border-b border-gray-300`
+        }
+      >
         <View className="flex flex-row gap-3 justify-start items-center">
           <Image
             className="rounded-lg shadow-md"
@@ -56,36 +66,56 @@ const MenuListH: React.FC<MenuListHProps> = ({
             <Text className="text-sm text-black font-semibold">
               {price ? formatRupiah(price) : ""}
             </Text>
-            <Text className="font-bold text-sm text-black mt-2">
-              Total: {total ? `${formatRupiah(total)}` : "Rp 0"}
-            </Text>
+
+            {stok === 0 ? (
+              <Text className="text-red-500 font-semibold">Stok Kosong</Text>
+            ) : (
+              <Text className="font-bold text-sm text-black mt-2">
+                Total: {total ? `${formatRupiah(total)}` : "Rp 0"}
+              </Text>
+            )}
+
+            {qty >= (stok ?? 0) && (
+              <Text className="text-red-500 font-semibold text-sm">
+                Stok hanya tersisa {stok}
+              </Text>
+            )}
           </View>
         </View>
 
-        <View className="flex flex-row gap-3 justify-center items-center">
-          <Button
-            size="xs"
-            variant="outline"
-            action="negative"
-            className="rounded-full p-2"
-            onPress={decrement}
-          >
-            <ButtonIcon as={Minus} />
-          </Button>
+        {stok !== 0 ? (
+          <View className="flex flex-row gap-3 justify-center items-center">
+            <Button
+              size="xs"
+              variant="outline"
+              action="negative"
+              className="rounded-full p-2"
+              onPress={decrement}
+            >
+              <ButtonIcon as={Minus} />
+            </Button>
 
-          <Text className="text-black font-semibold text-lg">{qty}</Text>
+            <Text className="text-black font-semibold text-lg">{qty}</Text>
 
-          <Button
-            size="xs"
-            variant="outline"
-            action="positive"
-            className="rounded-full p-2"
-            onPress={increment}
-          >
-            <ButtonIcon as={Plus} />
-          </Button>
-        </View>
+            <Button
+              size="xs"
+              variant="outline"
+              action="positive"
+              className={`rounded-full p-2 ${
+                qty >= (stok ?? 0) ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              onPress={increment}
+              disabled={qty >= (stok ?? 0)}
+            >
+              <ButtonIcon as={Plus} />
+            </Button>
+          </View>
+        ) : (
+          ""
+        )}
       </Card>
+
+      {}
     </View>
   );
 };

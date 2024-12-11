@@ -24,6 +24,7 @@ interface AppModalProps {
   rejectText?: string;
   confirmText?: string;
   size?: "sm" | "md" | "lg";
+  resource?: any;
 }
 
 const AppModal: React.FC<AppModalProps> = ({
@@ -38,6 +39,7 @@ const AppModal: React.FC<AppModalProps> = ({
   confirmText = "",
   cancelColor = "",
   confirmColor = "",
+  resource,
 }) => {
   return (
     <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={size}>

@@ -1,4 +1,9 @@
-import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import {
+  DefaultTheme,
+  NavigationContainer,
+  NavigationIndependentTree,
+  ThemeProvider,
+} from "@react-navigation/native";
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useFonts } from "expo-font";
@@ -12,11 +17,13 @@ import store from "@/store";
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <GluestackUIProvider mode="light">
-        <ThemeProvider value={DefaultTheme}>
-          <Slot />
-        </ThemeProvider>
-      </GluestackUIProvider>
+      <NavigationIndependentTree>
+        <GluestackUIProvider mode="light">
+          <ThemeProvider value={DefaultTheme}>
+            <Slot />
+          </ThemeProvider>
+        </GluestackUIProvider>
+      </NavigationIndependentTree>
     </Provider>
   );
 }

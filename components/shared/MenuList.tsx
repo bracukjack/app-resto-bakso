@@ -26,6 +26,15 @@ const MenuList: React.FC<MenuListProps> = ({
     <Pressable onPress={onPress}>
       <View>
         <Card className="flex flex-col gap-2 bg-transparent p-1">
+          <Text
+            className={
+              stok
+                ? `text-green-600 text-sm font-bold`
+                : `text-red-600 text-sm font-bold`
+            }
+          >
+            Stok: {stok ? stok : 0}
+          </Text>
           <Image
             className="rounded-lg shadow-md"
             size="lg"
@@ -33,10 +42,10 @@ const MenuList: React.FC<MenuListProps> = ({
             alt="menu image"
           />
           <View>
-            <Text className="font-bold text-sm text-black uppercase leading-5">
+            <Text className="font-semibold text-sm text-black uppercase">
               {title}
             </Text>
-            <Text className="text-sm text-blac font-semibold">
+            <Text className="text-xs text-blue-600 font-semibold">
               {price ? formatRupiah(price) : ""}
             </Text>
           </View>
