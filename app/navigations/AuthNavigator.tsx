@@ -28,7 +28,10 @@ export type RootStackParamList = {
 
   // seller account
   SellerAccount: undefined;
+  EditSellerProfile: undefined;
+  ChangePasswordSeller: undefined;
   TransactionList: undefined;
+  TransactionHistory: undefined;
   TransactionDetail: { transactionId: number };
   RecapitulationList: undefined;
   RecapitulationDetail: { recapitulationDate: string };

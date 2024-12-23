@@ -61,6 +61,7 @@ const TabNavigator = () => {
                 fontSize: 12,
               },
               tabBarLabel: "Order",
+              headerShown: false,
             }}
           />
           <Tab.Screen
@@ -90,6 +91,7 @@ const TabNavigator = () => {
               tabBarLabelStyle: {
                 fontSize: 12,
               },
+              tabBarLabel: "Order",
               headerShown: false,
             }}
           />

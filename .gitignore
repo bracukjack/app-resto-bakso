@@ -135,3 +135,6 @@ expo-env.d.ts
 # @end expo-cli
 
 .DS_Store
+
+.android
+.ios

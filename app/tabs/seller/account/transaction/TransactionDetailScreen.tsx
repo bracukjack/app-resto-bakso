@@ -1,3 +1,4 @@
+import React from "react";
 import transactionData from "@/app/data/transactionDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import AppModal from "@/components/shared/AppModal";
@@ -171,7 +172,7 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
 
           {transaction?.promo && (
             <Button disabled variant="solid" action="positive">
-              <ButtonText> {transaction?.promo}</ButtonText>
+              <ButtonText> Free Delivery </ButtonText>
             </Button>
           )}
         </HStack>
@@ -184,20 +185,32 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mb-5 mt-5">TOTAL:</Text>
+          <Text className="text-xl font-bold mt-2">ONGKIR:</Text>
 
-          <Text className="text-xl font-bold mb-5 mt-5 text-green-600">
-            {formatRupiah(transaction?.totalAmount || 0)}
+          <Text className="text-xl font-bold mt-2 text-blue-600">
+            {formatRupiah(
+              (transaction?.totalAmountAfterPromo ?? 0) -
+                (transaction?.totalAmount ?? 0)
+            )}
+          </Text>
+        </View>
+
+        <View className="flex flex-row gap-3 items-center justify-end">
+          <Text className="text-xl font-bold mb-5 mt-2">TOTAL:</Text>
+
+          <Text className="text-xl font-bold mb-5 mt-2 text-green-600">
+            {formatRupiah(transaction?.totalAmountAfterPromo || 0)}
           </Text>
         </View>
 
         {transaction?.status === StatusOrder.Pending && (
-          <Grid className="w-full gap-2" _extra={{ className: "grid-cols-2" }}>
+          <Grid className="w-full" _extra={{ className: "grid-cols-2" }}>
             <GridItem _extra={{ className: "col-span-1" }}>
               <Button
                 onPress={() => openModal(StatusOrder.Accepted)}
                 variant="solid"
                 action="positive"
+                className="mr-1"
               >
                 <ButtonText> TERIMA </ButtonText>
               </Button>
@@ -205,6 +218,7 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
 
             <GridItem _extra={{ className: "col-span-1" }}>
               <Button
+                className="ml-1"
                 onPress={() => openModal(StatusOrder.Rejected)}
                 variant="solid"
                 action="negative"
@@ -239,7 +253,7 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
           </Button>
         )}
 
-        <Button variant="solid" action="positive" className="mt-5">
+        <Button variant="solid" action="positive" className="mt-2">
           <ButtonText> PRINT </ButtonText>
           <ButtonIcon as={Printer} />
         </Button>

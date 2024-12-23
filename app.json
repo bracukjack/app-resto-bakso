@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "resto-bakso",
-    "slug": "resto-bakso",
+    "slug": "app-resto-bakso",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,13 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.widyadnyana.apprestobakso"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.widyadnyana.apprestobakso"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +38,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4d115800-7aea-4537-bc20-3fc64ac2f78c"
+      }
+    },
+    "owner": "widyadnyana"
   }
 }

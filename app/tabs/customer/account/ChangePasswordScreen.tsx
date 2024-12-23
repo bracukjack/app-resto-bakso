@@ -1,3 +1,4 @@
+import React from "react";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import Header from "@/components/shared/Header";
 import { Box } from "@/components/ui/box";

@@ -1,14 +1,10 @@
+import React from "react";
 import { VStack } from "@/components/ui/vstack";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, ButtonText } from "@/components/ui/button";
-import Header from "@/components/shared/Header";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Select,
-  SelectBackdrop,
   SelectContent,
-  SelectDragIndicator,
-  SelectDragIndicatorWrapper,
   SelectIcon,
   SelectInput,
   SelectItem,
@@ -18,7 +14,6 @@ import {
 import { useEffect, useState } from "react";
 import { ChevronDownIcon } from "lucide-react-native";
 import { Alert } from "react-native";
-import apiService from "@/service/apiService";
 import ApiService from "@/service/apiService";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";

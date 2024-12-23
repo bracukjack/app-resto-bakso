@@ -100,7 +100,7 @@ const OnGoingListScreen = () => {
                   </TableData>
 
                   <TableData className="text-sm p-2">
-                    {formatRupiah(item.totalAmount)}
+                    {formatRupiah(item.totalAmountAfterPromo)}
                   </TableData>
 
                   <TableData className="p-2">

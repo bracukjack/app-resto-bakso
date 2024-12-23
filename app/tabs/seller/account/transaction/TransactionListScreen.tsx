@@ -1,8 +1,9 @@
+import React from "react";
 import transactionData from "@/app/data/transactionDummy";
 import AppModal from "@/components/shared/AppModal";
 import Header from "@/components/shared/Header";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -29,6 +30,9 @@ import { Pressable } from "@/components/ui/pressable";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { set } from "mobx";
+import { HStack } from "@/components/ui/hstack";
+import { Input, InputField } from "@/components/ui/input";
+import { Search } from "lucide-react-native";
 
 const TransactionListScreen = () => {
   const tableHeaders = ["Buyer", "Order", "Total", "Status"];
@@ -42,6 +46,10 @@ const TransactionListScreen = () => {
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    Transaction[]
+  >([]);
+  const [searchKey, setSearchKey] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const today = new Date().toISOString().split("T")[0];
 
@@ -55,6 +63,7 @@ const TransactionListScreen = () => {
           (item) => item.transactionDate === today
         );
         setTransactions(filterData);
+        setFilteredTransactions(data); // Initialize filtered transactions
       }
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
@@ -64,6 +73,13 @@ const TransactionListScreen = () => {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  const handleSearch = () => {
+    const filtered = transactions.filter((item) =>
+      item.customerName.toLowerCase().includes(searchKey.toLowerCase())
+    );
+    setFilteredTransactions(filtered);
+  };
 
   const openModalConfirm = (id: number) => {
     setTransactionId(id);
@@ -82,6 +98,14 @@ const TransactionListScreen = () => {
     setShowModal(false);
     setModalType(null);
   };
+
+  // search function with /transaksi?search= api
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions();
+    }, [])
+  );
 
   const handleAccept = async (id: number) => {
     try {
@@ -131,19 +155,38 @@ const TransactionListScreen = () => {
 
   return (
     <>
-      <VStack className="p-5">
-        <ScrollView>
-          <Table className="w-full">
-            <TableHeader>
-              <TableRow>
-                {tableHeaders.map((header, index) => (
-                  <TableHead className="text-sm p-2" key={index}>
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <VStack className="px-5 pt-5 pb-20">
+        <HStack className="mb-5 w-full gap-3">
+          <Input className=" border w-1/2 focus:border-cyan-600">
+            <InputField
+              defaultValue={searchKey}
+              onChangeText={setSearchKey}
+              className="py-2"
+              type="text"
+              placeholder="Search Customer"
+            />
+          </Input>
+
+          <Button
+            onPress={handleSearch}
+            className="gap-5 justify-start items-center"
+            variant="link"
+          >
+            <ButtonIcon as={Search} />
+          </Button>
+        </HStack>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              {tableHeaders.map((header, index) => (
+                <TableHead className="text-sm p-2" key={index}>
+                  {header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <ScrollView>
               {transactions
                 .filter((item) => item.transactionDate === today)
                 .map((item, index) => (
@@ -212,21 +255,27 @@ const TransactionListScreen = () => {
                         </Button>
                       ) : (
                         <Button
-                          onPress={() => openModalConfirm(item.id)}
+                          className="bg-yellow-500 text-white px-2 rounded"
                           size="xs"
-                          variant="link"
+                          variant="solid"
                         >
-                          <ButtonText className="font-bold text-blue-500 underline">
-                            Confirm?
-                          </ButtonText>
+                          <ButtonText>{item.status}</ButtonText>
                         </Button>
                       )}
                     </TableData>
                   </TableRow>
                 ))}
-            </TableBody>
-          </Table>
-        </ScrollView>
+
+              {transactions.length === 0 && (
+                <TableRow>
+                  <TableData className="text-sm p-2">
+                    No transaction found
+                  </TableData>
+                </TableRow>
+              )}
+            </ScrollView>
+          </TableBody>
+        </Table>
       </VStack>
 
       {showModal && (

@@ -34,6 +34,47 @@ const SellerOrderScreen = () => {
   const [promo, setPromo] = useState<Promo[]>([]);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fungsi untuk mendapatkan status toko dari API
+  const fetchShopStatus = async () => {
+    try {
+      const response = await ApiService.get("/setting-buka-toko");
+      const data = response.data?.data;
+
+      console.log("data", data);
+      if (data.value === "1") {
+        setIsShopOpen(true);
+      } else {
+        setIsShopOpen(false);
+      }
+    } catch (error) {
+      console.error("Error fetching shop status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log("isShopOpen", isShopOpen);
+
+  const toggleShopStatus = async (newStatus: any) => {
+    try {
+      setLoading(true);
+      await ApiService.post(
+        `/setting-buka-toko?buka=${newStatus ? "1" : "0"}`,
+        {}
+      );
+      console.log("newStatus", newStatus);
+
+      setIsShopOpen(newStatus);
+    } catch (error) {
+      console.error("Error updating shop status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchMenu = async () => {
     try {
       const response = await ApiService.get("/produk");
@@ -84,6 +125,7 @@ const SellerOrderScreen = () => {
 
   const fetchAllData = async () => {
     await Promise.all([
+      fetchShopStatus(),
       fetchMenu(),
       fetchPromo(),
       fetchTransfer(),
@@ -111,6 +153,8 @@ const SellerOrderScreen = () => {
             trackColor={{ false: Colors.grey, true: Colors.success }}
             thumbColor={Colors.silver}
             ios_backgroundColor={Colors.grey}
+            value={isShopOpen}
+            onValueChange={(value) => toggleShopStatus(value)}
           />
         </Card>
 
@@ -118,8 +162,8 @@ const SellerOrderScreen = () => {
           <Box className="flex flex-col gap-5">
             <View>
               <View className="flex flex-row items-center justify-between">
-                <Text className="text-black mb-3 text-2xl font-bold">
-                  Kelola Produk
+                <Text className="text-black mb-3 text-2xl font-bold ">
+                  KELOLA PRODUK
                 </Text>
               </View>
 
@@ -145,7 +189,7 @@ const SellerOrderScreen = () => {
             <View>
               <View className="flex flex-row items-center justify-between">
                 <Text className="text-black mb-3 text-2xl font-bold">
-                  Kelola Delivery
+                  KELOLA DELIVERY
                 </Text>
                 <Button
                   onPress={() => navigation.navigate("CreateDelivery", {})}
@@ -181,9 +225,9 @@ const SellerOrderScreen = () => {
               </Grid>
             </View>
 
-            {/* <View>
+            <View>
               <Text className="text-black mb-3 text-2xl font-bold">
-                Kelola Promo Code
+                KELOLA PROMO CODE
               </Text>
               <Button
                 onPress={() => navigation.navigate("EditPromo")}
@@ -195,11 +239,11 @@ const SellerOrderScreen = () => {
                   {promo[0]?.syarat_promo}
                 </ButtonText>
               </Button>
-            </View> */}
+            </View>
 
             <View>
               <Text className="text-black mb-3 text-2xl font-bold">
-                Kelola Transfer
+                KELOLA TRANSFER
               </Text>
 
               <Card className="bg-slate-300 border w-full flex gap-3 border-cyan-500 rounded-2xl shadow-sm">

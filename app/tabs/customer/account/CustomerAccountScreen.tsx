@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { LogOut, User2 } from "lucide-react-native";
@@ -50,6 +50,21 @@ const CustomerAccountScreen = () => {
     }
   }, [token]);
 
+  const onPressLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        onPress: async () => {
+          await handleLogout();
+        },
+      },
+    ]);
+  };
+
   const handleLogout = async () => {
     try {
       // Menghapus token dari AsyncStorage
@@ -66,45 +81,56 @@ const CustomerAccountScreen = () => {
   };
 
   return (
-    <VStack className="w-full p-5 gap-5">
-      <View className="flex flex-col gap-2 justify-center items-center">
-        <View className="p-2 bg-slate-200 rounded-full">
-          <User2 size={100} />
+    <ScrollView>
+      <VStack className="w-full p-5 gap-5">
+        <View className="flex flex-col gap-2 justify-center items-center">
+          <View className="p-2 bg-slate-200 rounded-full">
+            <User2 color={"gray"} size={100} />
+          </View>
+          <Text className="text-black font-semibold text-lg">
+            {profile?.email}
+          </Text>
+          <Text className="text-black font-semibold text-lg">
+            {profile?.nama}
+          </Text>
+          <Text className="text-black font-semibold text-lg">
+            {profile?.kabupaten}
+          </Text>
+          <Text className="text-black font-semibold text-lg">
+            {profile?.alamat}
+          </Text>
+          <Text className="text-black font-semibold text-lg">
+            {profile?.telepon}
+          </Text>
         </View>
-        <Text className="text-black font-semibold text-lg">
-          {profile?.email}
-        </Text>
-        <Text className="text-black font-semibold text-lg">
-          {profile?.nama}
-        </Text>
-      </View>
-      <Divider className="my-0.5" />
-      <MenuLink
-        title={"EDIT PROFILE"}
-        onPress={() => navigation.navigate("EditProfile")}
-      />
-      <MenuLink
-        title={"CHANGE PASSWORD"}
-        onPress={() => navigation.navigate("ChangePassword")}
-      />
-      <MenuLink
-        title={"TRANSACTION ONGOING"}
-        onPress={() => navigation.navigate("OnGoingList")}
-      />
-      <MenuLink
-        title={"TRANSACTION COMPLETED"}
-        onPress={() => navigation.navigate("CompletedList")}
-      />
-      <Button
-        onPress={handleLogout}
-        className="flex flex-row gap-5 justify-start items-center"
-        variant="link"
-        action="negative"
-      >
-        <ButtonText>Logout</ButtonText>
-        <ButtonIcon as={LogOut} />
-      </Button>
-    </VStack>
+        <Divider className="my-0.5" />
+        <MenuLink
+          title={"EDIT PROFILE"}
+          onPress={() => navigation.navigate("EditProfile")}
+        />
+        <MenuLink
+          title={"CHANGE PASSWORD"}
+          onPress={() => navigation.navigate("ChangePassword")}
+        />
+        <MenuLink
+          title={"TRANSACTION ONGOING"}
+          onPress={() => navigation.navigate("OnGoingList")}
+        />
+        <MenuLink
+          title={"TRANSACTION COMPLETED"}
+          onPress={() => navigation.navigate("CompletedList")}
+        />
+        <Button
+          onPress={onPressLogout}
+          className="flex flex-row gap-5 justify-start items-center"
+          variant="link"
+          action="negative"
+        >
+          <ButtonText>Logout</ButtonText>
+          <ButtonIcon as={LogOut} />
+        </Button>
+      </VStack>
+    </ScrollView>
   );
 };
 

@@ -26,7 +26,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useRouter } from "expo-router";
 import { Printer } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Linking, View } from "react-native";
+import { ActivityIndicator, Linking, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type OnGoingDetailProps = NativeStackScreenProps<
@@ -76,7 +76,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
   }, [transactionId]);
 
   return (
-    <>
+    <ScrollView>
       <VStack className="p-5">
         <View className="flex flex-col gap-1 justify-start items-start mb-5">
           <Text className="text-blue-500 font-bold text-lg">
@@ -112,9 +112,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
             <TableFooter>
               <TableRow>
                 <TableHead className="p-2 text-red-500">Total</TableHead>
-                <TableHead className="p-2 text-red-500">
-                  {transaction?.totalAmount}
-                </TableHead>
+                <TableHead className="p-2 text-red-500"></TableHead>
                 <TableHead className="p-2 text-red-500">
                   {formatRupiah(transaction?.totalAmount || 0)}
                 </TableHead>
@@ -131,7 +129,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
             <ButtonText> {transaction?.deliveryMethod}</ButtonText>
           </Button>
 
-          {transaction?.promo && transaction?.deliveryMethod === "delivery" && (
+          {transaction?.promo && (
             <Button disabled variant="solid" action="positive">
               <ButtonText> Free Delivery </ButtonText>
             </Button>
@@ -146,10 +144,21 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mb-5 mt-5">TOTAL:</Text>
+          <Text className="text-xl font-bold mt-2">ONGKIR:</Text>
 
-          <Text className="text-xl font-bold mb-5 mt-5 text-green-600">
-            {formatRupiah(transaction?.totalAmount || 0)}
+          <Text className="text-xl font-bold mt-2 text-blue-600">
+            {formatRupiah(
+              (transaction?.totalAmountAfterPromo ?? 0) -
+                (transaction?.totalAmount ?? 0)
+            )}
+          </Text>
+        </View>
+
+        <View className="flex flex-row gap-3 items-center justify-end">
+          <Text className="text-xl font-bold mb-5 mt-2">TOTAL:</Text>
+
+          <Text className="text-xl font-bold mb-5 mt-2 text-green-600">
+            {formatRupiah(transaction?.totalAmountAfterPromo || 0)}
           </Text>
         </View>
 
@@ -175,7 +184,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </Button>
         {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
       </VStack>
-    </>
+    </ScrollView>
   );
 };
 

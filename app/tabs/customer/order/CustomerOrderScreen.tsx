@@ -3,8 +3,9 @@ import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import Header from "@/components/shared/Header";
 import MenuListH from "@/components/shared/MenuListHorizontal";
 import UploadMedia from "@/components/shared/UploadFile";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Center } from "@/components/ui/center";
 import { Grid, GridItem } from "@/components/ui/grid";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -25,6 +26,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { Delivery } from "@/model/delivery";
 import { Product } from "@/model/product";
+import { Promo } from "@/model/promo";
 import { Transfer } from "@/model/transfer";
 import { User } from "@/model/user";
 import ApiService from "@/service/apiService";
@@ -32,7 +34,7 @@ import { RootState } from "@/store";
 import { formatRupiah } from "@/utils/formatCurrency";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { ChevronDownIcon } from "lucide-react-native";
+import { ChevronDownIcon, Frown, Search, Smile } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -45,10 +47,35 @@ const CustomerOrderScreen = () => {
   const [transfer, setTransfer] = useState<Transfer[]>([]);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [delivery, setDelivery] = useState<Delivery[]>([]);
+  const [promo, setPromo] = useState<Promo[]>([]);
+  const [promoCode, setPromoCode] = useState("");
+  const [truePromo, setTruePromo] = useState("");
+  const [isPromoApplied, setIsPromoApplied] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const { token } = useSelector((state: RootState) => state.auth);
   const [profile, setProfile] = useState<User | null>(null);
   const [hargaOngkir, setHargaOngkir] = useState(0);
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchShopStatus = async () => {
+    try {
+      const response = await ApiService.get("/setting-buka-toko");
+      const data = response.data?.data;
+
+      console.log("data", data);
+      if (data.value === "1") {
+        setIsShopOpen(true);
+      } else {
+        setIsShopOpen(false);
+      }
+    } catch (error) {
+      console.error("Error fetching shop status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchMenu = async () => {
     try {
       const response = await ApiService.get("/produk");
@@ -103,6 +130,18 @@ const CustomerOrderScreen = () => {
     }
   };
 
+  const fetchPromo = async () => {
+    try {
+      const response = await ApiService.get("/promo");
+      const data = response.data?.data;
+      if (Array.isArray(data)) {
+        setPromo(data);
+      }
+    } catch (error) {
+      console.error("Error fetching promo:", error);
+    }
+  };
+
   const fetchDelivery = async () => {
     try {
       const response = await ApiService.get("/delivery");
@@ -120,11 +159,13 @@ const CustomerOrderScreen = () => {
 
   useEffect(() => {
     if (token) {
+      fetchShopStatus();
       fetchTransfer();
       fetchMenu();
       fetchProfile();
       fetchDelivery();
       getOngkir();
+      fetchPromo();
     }
   }, [token]);
 
@@ -182,6 +223,7 @@ const CustomerOrderScreen = () => {
         metode_pembayaran: selectedPaymentOption,
         pembeli_id: profile?.id,
         delivery_type: selectedOption,
+        promo: truePromo,
       };
 
       const response = await ApiService.post("/transaksi", body);
@@ -205,6 +247,9 @@ const CustomerOrderScreen = () => {
           });
           return newQuantities;
         });
+        setIsPromoApplied(false);
+        setPromoCode("");
+        setTruePromo("");
         setSelectedOption(""); // Reset selected delivery option
         setSelectedPaymentOption(""); // Reset selected payment option
       } else {
@@ -226,153 +271,181 @@ const CustomerOrderScreen = () => {
     }, [])
   );
 
+  const handleCheckPromo = () => {
+    const matchedPromo = promo.find((item) => item.syarat_promo === promoCode);
+
+    if (matchedPromo) {
+      alert(`Promo ditemukan, anda mendapatkan Gratis Ongkir`);
+      setTruePromo(matchedPromo.syarat_promo);
+      setIsPromoApplied(true); // Promo diterapkan
+    } else {
+      setTruePromo("");
+      setIsPromoApplied(false); // Promo tidak diterapkan
+      alert(`Promo tidak ditemukan`);
+    }
+  };
+
   return (
-    <ScrollView>
-      <VStack space="md" className="p-5">
-        {menu.map((item, index) => (
-          <MenuListH
-            id={item.id}
-            key={index}
-            image={item.gambar_url}
-            title={item.nama_produk}
-            price={item.harga}
-            stok={item.stok}
-            onQtyChange={handleQtyChange}
-          />
-        ))}
+    <SafeAreaView>
+      <ScrollView>
+        {isShopOpen ? (
+          <VStack space="md" className="p-5">
+            {menu.map((item, index) => (
+              <MenuListH
+                id={item.id}
+                key={index}
+                image={item.gambar_url}
+                title={item.nama_produk}
+                price={item.harga}
+                stok={item.stok}
+                onQtyChange={handleQtyChange}
+              />
+            ))}
 
-        <VStack space="md">
-          <Grid className="gap-5" _extra={{ className: "grid-cols-2" }}>
-            <GridItem _extra={{ className: "col-span-1" }}>
-              <Select onValueChange={handleSelectChange}>
-                <SelectTrigger variant="outline" size="md">
-                  <SelectInput placeholder="Delivery/TakeAway" />
-                  <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                </SelectTrigger>
-                <SelectPortal>
-                  <SelectBackdrop />
-                  <SelectContent>
-                    <SelectDragIndicatorWrapper>
-                      <SelectDragIndicator />
-                    </SelectDragIndicatorWrapper>
-                    <SelectItem label="Delivery" value="delivery" />
-                    <SelectItem label="Take Away" value="take-away" />
-                  </SelectContent>
-                </SelectPortal>
-              </Select>
-            </GridItem>
+            <VStack space="md">
+              <HStack className="gap-2" space="md">
+                <Select className="w-1/2" onValueChange={handleSelectChange}>
+                  <SelectTrigger variant="outline" size="md">
+                    <SelectInput placeholder="Delivery/TakeAway" />
+                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectItem label="Delivery" value="delivery" />
+                      <SelectItem label="Take Away" value="take-away" />
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
 
-            {/* {selectedOption === "delivery" && (
-              <Input>
-                <InputField
-                  value={promo}
-                  onChangeText={setPromo}
-                  className="py-2"
-                  type="text"
-                  placeholder="Promo Code"
-                />
-              </Input>
-            )} */}
+                {selectedOption === "delivery" && (
+                  <HStack className="w-1/2 gap-3">
+                    <Input className="w-3/4">
+                      <InputField
+                        defaultValue={promoCode}
+                        onChangeText={setPromoCode}
+                        className="py-2"
+                        type="text"
+                        placeholder="Promo Code"
+                      />
+                    </Input>
 
-            {/* <GridItem _extra={{ className: "col-span-1" }}>
-              {selectedOption === "delivery" && (
-                <UploadMedia
-                  mediaText="Upload Bukti Promo Untuk Mendapatkan CASHBACK FREE ONGKIR "
-                  label="Add Bukti Promo"
-                  
-                />
-              )}
-            </GridItem> */}
-          </Grid>
-
-          <Grid className="gap-5" _extra={{ className: "grid-cols-2" }}>
-            <GridItem _extra={{ className: "col-span-1" }}>
-              <Select onValueChange={handleSelectPaymentChange}>
-                <SelectTrigger variant="outline" size="md">
-                  <SelectInput placeholder="Cash/Transfer" />
-                  <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                </SelectTrigger>
-                <SelectPortal>
-                  <SelectBackdrop />
-                  <SelectContent>
-                    <SelectDragIndicatorWrapper>
-                      <SelectDragIndicator />
-                    </SelectDragIndicatorWrapper>
-                    <SelectItem label="Cash" value="cash" />
-                    <SelectItem label="Transfer" value="transfer" />
-                  </SelectContent>
-                </SelectPortal>
-              </Select>
-            </GridItem>
-
-            <GridItem _extra={{ className: "col-span-1" }}>
-              {selectedPaymentOption === "transfer" && (
-                <View>
-                  <Text className="font-bold text-sm">
-                    {transfer[0].nama_bank} : {transfer[0].nomor_rekening}
-                  </Text>
-                  <Text className="text-sm">A/N {transfer[0].atas_nama}</Text>
-                </View>
-              )}
-            </GridItem>
-            {/* <GridItem _extra={{ className: "col-span-1" }}>
-              {selectedPaymentOption === "transfer" && (
-                <UploadMedia
-                  mediaText="Upload Bukti Transfer"
-                  label="Add Bukti Transfer"
-                />
-              )}
-            </GridItem> */}
-          </Grid>
-          {selectedPaymentOption === "transfer" && (
-            <Text className="text-sm text-medium text-red-600">
-              Note : Konfirmasi bukti transfer di wa : 0812-XXXX-XXXX
-            </Text>
-          )}
-
-          <View>
-            <View className="flex flex-row justify-between mt-5">
-              <Text className="font-bold text-gray-600">SUB TOTAL</Text>
-
-              <Text className="font-bold text-gray-600">
-                {formatRupiah(totalAmount)}
-              </Text>
-            </View>
-
-            {selectedOption === "delivery" && (
-              <View className="flex flex-row justify-between">
-                <Text className="font-semibold text-gray-600">ONGKIR</Text>
-
-                <Text className="font-semibold text-gray-600">
-                  {formatRupiah(hargaOngkir)}
-                </Text>
-              </View>
-            )}
-
-            <View className="flex flex-row justify-between">
-              <Text className="font-bold text-green-600 text-lg">
-                GRAND TOTAL
-              </Text>
-              <Text className="font-bold text-green-600 text-lg">
-                {formatRupiah(
-                  totalAmount +
-                    (selectedOption === "delivery" ? hargaOngkir : 0)
+                    <Button
+                      onPress={handleCheckPromo}
+                      className="gap-5 justify-start items-center"
+                      variant="link"
+                      action="negative"
+                    >
+                      <ButtonIcon as={Search} />
+                    </Button>
+                  </HStack>
                 )}
-              </Text>
-            </View>
-          </View>
+              </HStack>
 
-          <Button
-            variant="solid"
-            action="positive"
-            className="mt-5"
-            onPress={submitOrder}
-          >
-            <ButtonText>Process Order</ButtonText>
-          </Button>
-        </VStack>
-      </VStack>
-    </ScrollView>
+              <HStack className="gap-5" space="xl">
+                <Select
+                  className="w-1/2"
+                  onValueChange={handleSelectPaymentChange}
+                >
+                  <SelectTrigger variant="outline" size="md">
+                    <SelectInput placeholder="Cash/Transfer" />
+                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectItem label="Cash" value="cash" />
+                      <SelectItem label="Transfer" value="transfer" />
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+
+                {selectedPaymentOption === "transfer" && (
+                  <View className="w-1/2">
+                    <Text className="font-bold text-sm">
+                      {transfer[0].nama_bank} : {transfer[0].nomor_rekening}
+                    </Text>
+                    <Text className="text-sm">A/N {transfer[0].atas_nama}</Text>
+                  </View>
+                )}
+              </HStack>
+              {selectedPaymentOption === "transfer" && (
+                <Text className="text-sm text-medium text-red-600">
+                  Note : Konfirmasi bukti transfer di wa : 0812-XXXX-XXXX
+                </Text>
+              )}
+
+              <View>
+                <View className="flex flex-row justify-between mt-5">
+                  <Text className="font-bold text-gray-600">SUB TOTAL</Text>
+
+                  <Text className="font-bold text-gray-600">
+                    {formatRupiah(totalAmount)}
+                  </Text>
+                </View>
+
+                {selectedOption === "delivery" && (
+                  <View className="flex flex-row justify-between">
+                    <Text className="font-semibold text-gray-600">ONGKIR</Text>
+                    <Text className="font-semibold text-gray-600">
+                      {isPromoApplied
+                        ? formatRupiah(0)
+                        : formatRupiah(hargaOngkir)}
+                    </Text>
+                  </View>
+                )}
+                <View className="flex flex-row justify-between">
+                  <Text className="font-bold text-green-600 text-lg">
+                    GRAND TOTAL
+                  </Text>
+                  <Text className="font-bold text-green-600 text-lg">
+                    {formatRupiah(
+                      totalAmount +
+                        (selectedOption === "delivery" && !isPromoApplied
+                          ? hargaOngkir
+                          : 0) // Ongkir hanya ditambahkan jika promo tidak diterapkan
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              <Button
+                variant="solid"
+                action="positive"
+                className="mt-5"
+                onPress={submitOrder}
+              >
+                <ButtonText>Process Order</ButtonText>
+              </Button>
+            </VStack>
+          </VStack>
+        ) : (
+          <Center className="h-[80vh] p-10">
+            <VStack space="lg" className="items-center">
+              <Frown size={100} color={"gray"} />
+
+              <Text className="text-gray-600 text-3xl font-bold">
+                KAMI SEDANG TUTUP
+              </Text>
+
+              <Text className="text-gray-600 text-center text-xl font-medium">
+                Informasi buka dan tutup akan diupdate di social media kami{" "}
+              </Text>
+              <Smile
+                size={40}
+                className="text-white bg-yellow-500 p-1 rounded-full"
+              />
+            </VStack>
+          </Center>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
