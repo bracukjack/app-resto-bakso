@@ -151,7 +151,7 @@ const RegisterScreen = () => {
               <Input className="border focus:border-cyan-600">
                 <InputField
                   className="py-2"
-                  placeholder="Password"
+                  placeholder="Kata Sandi"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChangeText={setPassword}
@@ -167,7 +167,7 @@ const RegisterScreen = () => {
 
             <VStack space="lg" className="pt-4">
               <Button className="bg-cyan-600" size="sm" onPress={handleSubmit}>
-                <ButtonText>Submit</ButtonText>
+                <ButtonText>Simpan</ButtonText>
               </Button>
               {/* <Box className="flex flex-row">
                 <Button onPress={() => router.back()} variant="link" size="md">

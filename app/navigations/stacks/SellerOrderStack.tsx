@@ -10,27 +10,29 @@ import CreateDeliveryScreen from "@/app/tabs/seller/order/delivery/CreateDeliver
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const SellerOrderStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator
+    screenOptions={{ headerShown: false, headerBackTitle: "Kembali" }}
+  >
     <Stack.Screen name="SellerOrder" component={SellerOrderScreen} />
     <Stack.Screen
       name="EditProduct"
       component={EditProductScreen}
-      options={{ headerShown: true, title: "Edit Product" }}
+      options={{ headerShown: true, title: "Edit Produk" }}
     />
     <Stack.Screen
       name="CreateDelivery"
       component={CreateDeliveryScreen}
-      options={{ headerShown: true, title: "Create Delivery" }}
+      options={{ headerShown: true, title: "Edit Delivery" }}
     />
     <Stack.Screen
       name="EditPromo"
       component={EditPromoScreen}
-      options={{ headerShown: true, title: "Edit Promo" }}
+      options={{ headerShown: true, title: "Edit Kode Promo" }}
     />
     <Stack.Screen
       name="EditBank"
       component={EditBankScreen}
-      options={{ headerShown: true, title: "Edit Bank" }}
+      options={{ headerShown: true, title: "Edit Transfer" }}
     />
   </Stack.Navigator>
 );

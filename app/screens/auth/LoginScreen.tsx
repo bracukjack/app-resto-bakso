@@ -36,18 +36,16 @@ const LoginScreen = () => {
         // Simpan token ke Redux dan AsyncStorage
         dispatch(login({ email, token }));
         await AsyncStorage.setItem("token", token);
+        await AsyncStorage.setItem("email", email);
 
         // Beri notifikasi sukses dan navigasi
-        alert("Login Successful");
+        alert("Login Sukses");
         navigation.replace("Tabs");
       } else {
-        alert("Login failed, Invalid credentials!");
-        console.log("Login failed:", response.data);
+        alert("Gagal masuk, kredensial tidak valid!");
       }
     } catch (error) {
-      // Tangani error
-      console.error("Error during login:", error);
-      alert("An error occurred. Please try again.");
+      alert("Terjadi kesalahan. Silakan coba lagi.");
     }
   };
 
@@ -76,7 +74,7 @@ const LoginScreen = () => {
                 <InputField
                   className="py-2"
                   type="password"
-                  placeholder="Password"
+                  placeholder="Kata Sandi"
                   value={password}
                   onChangeText={setPassword}
                 />
@@ -85,11 +83,11 @@ const LoginScreen = () => {
 
             <VStack space="lg" className="pt-4">
               <Button className="bg-cyan-600" size="sm" onPress={handleLogin}>
-                <ButtonText>Submit</ButtonText>
+                <ButtonText>Masuk</ButtonText>
               </Button>
 
               <Box className="flex flex-col items-center justify-center">
-                <Text>Don't have an account?</Text>
+                <Text>Belum Punya Akun?</Text>
                 <Button
                   onPress={() => navigation.navigate("Register")}
                   variant="link"

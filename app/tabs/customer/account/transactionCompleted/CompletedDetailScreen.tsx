@@ -1,10 +1,6 @@
-import transactionData from "@/app/data/transactionDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
-import Header from "@/components/shared/Header";
-import { Alert, AlertText } from "@/components/ui/alert";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Divider } from "@/components/ui/divider";
-import { Grid, GridItem } from "@/components/ui/grid";
+import MyLoader from "@/components/shared/Loader";
+import { Button, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import {
   Table,
@@ -21,13 +17,10 @@ import { StatusOrder } from "@/constants/statusEnums";
 import { Transaction } from "@/model/transaction";
 import ApiService from "@/service/apiService";
 import { formatRupiah } from "@/utils/formatCurrency";
-import { RouteProp, useRoute } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useRouter } from "expo-router";
-import { Printer } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Linking, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Loader, Printer } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Linking, RefreshControl, ScrollView, View } from "react-native";
 
 type OnGoingDetailProps = NativeStackScreenProps<
   RootStackParamList,
@@ -35,14 +28,18 @@ type OnGoingDetailProps = NativeStackScreenProps<
 >;
 
 const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
-  const tableHeaders = ["Product", "Qty", "Price"];
-  const router = useRouter();
-
+  const tableHeaders = ["Produk", "Jumlah", "Harga"];
   const { transactionId } = route.params;
-
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
 
-  const [isLoading, setIsLoading] = useState(false);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const handlePrint = async () => {
     const fileUrl = `https://resto-bakso.redseal.cloud/api/v1/invoice/${transaction?.transactionNumber}`;
@@ -50,9 +47,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
     if (supported) {
       Linking.openURL(fileUrl);
     } else {
-      <Alert className="alert">
-        <AlertText>Cannot open this URL.</AlertText>
-      </Alert>;
+      Alert.alert("Tidak Dapat Membuka URL Ini");
     }
   };
 
@@ -65,7 +60,9 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         setTransaction(data);
       }
     } catch (error) {
-      console.error("Failed to fetch transaction by ID:", error);
+      console.error("Gagal mengambil transaksi berdasarkan ID:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,8 +72,18 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
     }
   }, [transactionId]);
 
-  return (
-    <ScrollView>
+  return loading ? (
+    <MyLoader />
+  ) : (
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["blue"]}
+        />
+      }
+    >
       <VStack className="p-5">
         <View className="flex flex-col gap-1 justify-start items-start mb-5">
           <Text className="text-blue-500 font-bold text-lg">
@@ -120,8 +127,8 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
             </TableFooter>
           </Table>
         </View>
-        <Text className="text-lg font-bold mb-5 mt-5">
-          Adress : {transaction?.customerAddress}
+        <Text className="text-lg font-bold mb-5 mt-5 capitalize">
+          Alamat : {transaction?.customerAddress}
         </Text>
 
         <HStack className="flex flex-row gap-5 ">
@@ -138,13 +145,13 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
 
         <View className="flex flex-row gap-3 items-center">
           <Text className="text-lg mb-5 mt-5">Metode Pembayaran :</Text>
-          <Text className="text-xl font-bold mb-5 mt-5 text-cyan-600">
+          <Text className="text-xl font-bold mb-5 mt-5 text-cyan-600 capitalize">
             {transaction?.paymentMethod}
           </Text>
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mt-2">ONGKIR:</Text>
+          <Text className="text-xl font-bold mt-2">ONGKOS KIRIM:</Text>
 
           <Text className="text-xl font-bold mt-2 text-blue-600">
             {formatRupiah(
@@ -155,7 +162,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mb-5 mt-2">TOTAL:</Text>
+          <Text className="text-xl font-bold mb-5 mt-2">TOTAL BAYAR:</Text>
 
           <Text className="text-xl font-bold mb-5 mt-2 text-green-600">
             {formatRupiah(transaction?.totalAmountAfterPromo || 0)}
@@ -164,7 +171,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
 
         {transaction?.status === StatusOrder.Completed && (
           <Button disabled variant="solid" className="bg-blue-500">
-            <ButtonText> SELESAI </ButtonText>
+            <ButtonText> BERHASIL </ButtonText>
           </Button>
         )}
 
@@ -182,7 +189,7 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
           <Printer size={20} color="#fff" />
           <Text className="text-white ml-2">PRINT</Text>
         </Button>
-        {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
+        {loading && <Loader size={20} color="white" />}
       </VStack>
     </ScrollView>
   );

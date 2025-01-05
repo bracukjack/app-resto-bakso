@@ -1,11 +1,10 @@
-import { Alert, ScrollView, View } from "react-native";
+import { Alert, RefreshControl, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { LogOut, User2 } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import { Divider } from "@/components/ui/divider";
 import MenuLink from "@/components/shared/MenuLink";
-import { useRouter } from "expo-router";
 import { User } from "@/model/user";
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,50 +13,55 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import { RootState } from "@/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ApiService from "@/service/apiService";
+import { HStack } from "@/components/ui/hstack";
+import MyLoader from "@/components/shared/Loader";
 
 const CustomerAccountScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
-  const { token } = useSelector((state: RootState) => state.auth);
   const [profile, setProfile] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchProfile = async () => {
     try {
-      if (!token) {
-        console.log("No token found");
-        return;
-      }
-
       const response = await ApiService.get("/profile");
       const data = response.data.data;
 
       if (data) {
         setProfile(data);
       } else {
-        console.log("Profile not found or invalid response");
+        console.log("Profil tidak ditemukan atau respons tidak valid");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Terjadi kesalahan saat mengambil data profil:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
-  }, [token]);
+    fetchProfile();
+  }, []);
 
   const onPressLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
+    Alert.alert("Keluar", "Apakah Anda Yakin Untuk Keluar/Ganti Akun?", [
       {
-        text: "Cancel",
+        text: "KEMBALI",
         style: "cancel",
       },
       {
-        text: "Logout",
+        text: "LANJUTKAN",
         onPress: async () => {
           await handleLogout();
         },
@@ -69,55 +73,64 @@ const CustomerAccountScreen = () => {
     try {
       // Menghapus token dari AsyncStorage
       await AsyncStorage.removeItem("token");
-      alert("Logout successful");
+      await AsyncStorage.removeItem("email");
+      alert("Anda Berhasil Keluar");
 
       // Menghapus informasi pengguna dari Redux
       dispatch(logout());
       navigation.replace("Login");
-      console.log("User logged out successfully");
     } catch (error) {
-      console.error("Error during logout:", error);
+      console.error("Kesalahan saat logout:", error);
     }
   };
 
-  return (
-    <ScrollView>
+  return loading ? (
+    <MyLoader />
+  ) : (
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["blue"]}
+        />
+      }
+    >
       <VStack className="w-full p-5 gap-5">
-        <View className="flex flex-col gap-2 justify-center items-center">
+        <HStack className="items-center gap-2">
           <View className="p-2 bg-slate-200 rounded-full">
-            <User2 color={"gray"} size={100} />
+            <User2 color={"gray"} size={80} />
           </View>
-          <Text className="text-black font-semibold text-lg">
-            {profile?.email}
-          </Text>
-          <Text className="text-black font-semibold text-lg">
-            {profile?.nama}
-          </Text>
-          <Text className="text-black font-semibold text-lg">
-            {profile?.kabupaten}
-          </Text>
-          <Text className="text-black font-semibold text-lg">
-            {profile?.alamat}
-          </Text>
-          <Text className="text-black font-semibold text-lg">
-            {profile?.telepon}
-          </Text>
-        </View>
+          <View>
+            <Text className="text-black font-medium text-base">
+              {profile?.nama}
+            </Text>
+            <Text className="text-black font-medium text-base">
+              {profile?.email}
+            </Text>
+            <Text className="text-black font-medium text-base">
+              {profile?.alamat} - {profile?.kabupaten}
+            </Text>
+            <Text className="text-black font-medium text-base">
+              {profile?.telepon}
+            </Text>
+          </View>
+        </HStack>
         <Divider className="my-0.5" />
         <MenuLink
-          title={"EDIT PROFILE"}
+          title={"EDIT PROFIL"}
           onPress={() => navigation.navigate("EditProfile")}
         />
         <MenuLink
-          title={"CHANGE PASSWORD"}
+          title={"GANTI KATA SANDI"}
           onPress={() => navigation.navigate("ChangePassword")}
         />
         <MenuLink
-          title={"TRANSACTION ONGOING"}
+          title={"TRANSAKSI BERLANGSUNG"}
           onPress={() => navigation.navigate("OnGoingList")}
         />
         <MenuLink
-          title={"TRANSACTION COMPLETED"}
+          title={"TRANSAKSI SELESAI"}
           onPress={() => navigation.navigate("CompletedList")}
         />
         <Button
@@ -126,7 +139,7 @@ const CustomerAccountScreen = () => {
           variant="link"
           action="negative"
         >
-          <ButtonText>Logout</ButtonText>
+          <ButtonText>KELUAR</ButtonText>
           <ButtonIcon as={LogOut} />
         </Button>
       </VStack>

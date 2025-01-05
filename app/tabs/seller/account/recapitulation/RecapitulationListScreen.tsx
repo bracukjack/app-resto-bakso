@@ -1,6 +1,7 @@
 import transactionRecap from "@/app/data/recapitulationDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import Header from "@/components/shared/Header";
+import MyLoader from "@/components/shared/Loader";
 import { Pressable } from "@/components/ui/pressable";
 import {
   Table,
@@ -18,38 +19,60 @@ import { formatDate } from "@/utils/dateFormat";
 import { formatRupiah } from "@/utils/formatCurrency";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ScrollView } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const RecapitulationListScreen = () => {
-  const tableHeaders = ["Date", "Transaction", "Total"];
+  const tableHeaders = ["Tanggal", "Transaksi", "Total"];
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [recapitulation, setRecapitulation] = useState<Recapitulation>();
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchRecapitulation = async () => {
     try {
       const response = await ApiService.get("/laporan");
       const data = response.data?.data;
 
-      console.log("DATA ", data);
-
       if (data) {
         setRecapitulation(data);
       }
     } catch (error) {
-      console.error("Failed to fetch Recapitulation:", error);
+      console.error("Gagal mengambil Laporan Transaksi:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchRecapitulation();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecapitulation();
+    }, [])
+  );
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <VStack className="p-5">
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["blue"]}
+          />
+        }
+      >
         <Table className="w-full">
           <TableHeader>
             <TableRow>

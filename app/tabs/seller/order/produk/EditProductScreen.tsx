@@ -13,6 +13,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import MyLoader from "@/components/shared/Loader";
 
 type EditProductProps = NativeStackScreenProps<
   RootStackParamList,
@@ -25,8 +27,8 @@ const EditProductScreen = ({ route }: EditProductProps) => {
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [productStok, setProductStok] = useState("");
-  const { token } = useSelector((state: RootState) => state.auth);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const [loading, setLoading] = useState(true);
 
   const fetchProduct = async (id: number) => {
     try {
@@ -41,6 +43,8 @@ const EditProductScreen = ({ route }: EditProductProps) => {
       }
     } catch (error) {
       console.error("Error fetching product:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,14 +56,14 @@ const EditProductScreen = ({ route }: EditProductProps) => {
         stok: parseInt(productStok, 10), // Ensure integer format
       };
 
+      const token = await AsyncStorage.getItem("token");
       const response = await ApiService.put(
         `/produk/${productId}`,
         payload,
         token ?? ""
       );
       if (response.status === 200 || response.status === 201) {
-        console.log("Product updated successfully!");
-        Alert.alert("Sukses", "Produt berhasil diupdate!", [
+        Alert.alert("Sukses", "Produk berhasil diperbaharui!", [
           {
             text: "OK",
             onPress: () => navigation.navigate("SellerOrder"),
@@ -70,6 +74,8 @@ const EditProductScreen = ({ route }: EditProductProps) => {
       }
     } catch (error) {
       console.error("Error updating product:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,13 +83,15 @@ const EditProductScreen = ({ route }: EditProductProps) => {
     fetchProduct(productId);
   }, [productId]);
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <VStack space="xl" className="p-5">
       <Input className=" border focus:border-cyan-600">
         <InputField
           className="py-2"
           type="text"
-          placeholder="Product Name"
+          placeholder="Nama Produk"
           value={productName}
           onChangeText={setProductName}
         />
@@ -93,7 +101,7 @@ const EditProductScreen = ({ route }: EditProductProps) => {
         <InputField
           className="py-2"
           type="text"
-          placeholder="Product Price"
+          placeholder="Harga Produk"
           value={productPrice}
           onChangeText={setProductPrice}
         />
@@ -102,7 +110,7 @@ const EditProductScreen = ({ route }: EditProductProps) => {
         <InputField
           className="py-2"
           type="text"
-          placeholder="Product Stok"
+          placeholder="Stok Produk"
           value={productStok}
           onChangeText={setProductStok}
         />
@@ -116,7 +124,7 @@ const EditProductScreen = ({ route }: EditProductProps) => {
       /> */}
 
       <Button onPress={handleSubmit} className="bg-cyan-600" size="sm">
-        <ButtonText>Submit</ButtonText>
+        <ButtonText>Simpan</ButtonText>
       </Button>
     </VStack>
   );

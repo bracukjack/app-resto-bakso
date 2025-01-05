@@ -24,24 +24,18 @@ import { User } from "@/model/user";
 import { kabupatenOptions } from "@/constants/Kabupaten";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EditProfileScreen = () => {
-  const { token } = useSelector((state: RootState) => state.auth);
   const [profile, setProfile] = useState<User | null>(null);
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [address, setAddress] = useState<string>("");
-  // const [kabupaten, setKabupaten] = useState<string>("");
   const [telepon, setTelepon] = useState<string>("");
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const fetchProfile = async () => {
     try {
-      if (!token) {
-        console.log("No token found");
-        return;
-      }
-
       const response = await ApiService.get("/profile");
       const data = response.data.data;
 
@@ -50,23 +44,24 @@ const EditProfileScreen = () => {
         setName(data.nama || "");
         setEmail(data.email || "");
         setAddress(data.alamat || "");
-        // setKabupaten(data.kabupaten || "");
         setTelepon(data.telepon || "");
       } else {
-        console.log("Profile not found or invalid response");
+        console.log("Profil tidak ditemukan atau respons tidak valid");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Terjadi kesalahan saat mengambil profil:", error);
     }
   };
 
   const handleSubmit = async () => {
     if (!name || !email || !address || !telepon) {
-      Alert.alert("Error", "All fields are required.");
+      Alert.alert("Error", "Semua kolom wajib diisi.");
       return;
     }
 
     try {
+      const token = await AsyncStorage.getItem("token");
+
       const response = await ApiService.put(
         "/update-profile",
         {
@@ -82,73 +77,58 @@ const EditProfileScreen = () => {
       if (response.status === 200 || response.status === 201) {
         // Handle success, misalnya redirect ke halaman profile
 
-        Alert.alert("Sukses", "Profile berhasil diupdate!", [
+        Alert.alert("Sukses", "Profil berhasil diperbaharui!", [
           {
             text: "OK",
             onPress: () => navigation.navigate("SellerAccount"),
           },
         ]);
       } else {
-        Alert.alert("Error", "Failed to update profile.");
+        Alert.alert("Error", "Profil gagal diperbarui!", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("SellerAccount"),
+          },
+        ]);
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "An error occurred while updating profile.");
+      Alert.alert("Error", "Terjadi kesalahan saat memperbarui profil.");
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
-  }, [token]);
+    fetchProfile();
+  }, []);
 
   return (
     <>
       <VStack space="xl" className="p-5">
         <Input className=" border focus:border-cyan-600">
           <InputField
-            value={name}
+            value={name || ""}
             onChangeText={setName}
             className="py-2"
             type="text"
-            placeholder="Name"
+            placeholder="Nama"
           />
         </Input>
 
-        {/* <Select onValueChange={setKabupaten}>
-          <SelectTrigger variant="outline" size="md">
-            <SelectInput placeholder="Select Kabupaten" />
-            <SelectIcon className="mr-3" as={ChevronDownIcon} />
-          </SelectTrigger>
-          <SelectPortal>
-            <SelectContent>
-              {kabupatenOptions.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </SelectContent>
-          </SelectPortal>
-        </Select> */}
-
         <Input className=" border focus:border-cyan-600">
           <InputField
-            value={address}
+            value={address || ""}
             onChangeText={setAddress}
             className="py-2"
             type="text"
-            placeholder="Address"
+            placeholder="Alamat"
           />
         </Input>
 
         <Input className=" border focus:border-cyan-600">
           <InputField
-            value={email}
+            value={email || ""}
             onChangeText={setEmail}
-            className="py-2"
+            className="py-2 lowercase"
             type="text"
             placeholder="Email"
           />
@@ -156,7 +136,7 @@ const EditProfileScreen = () => {
 
         <Input className=" border focus:border-cyan-600">
           <InputField
-            value={telepon}
+            value={telepon || ""}
             onChangeText={setTelepon}
             className="py-2"
             type="text"
@@ -165,7 +145,7 @@ const EditProfileScreen = () => {
         </Input>
 
         <Button onPress={handleSubmit} className="bg-cyan-600" size="sm">
-          <ButtonText>Submit</ButtonText>
+          <ButtonText>Simpan</ButtonText>
         </Button>
       </VStack>
     </>

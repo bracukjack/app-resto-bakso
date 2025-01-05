@@ -14,8 +14,6 @@ class ApiService {
 
   private static async apiRequest(url: string, requestInit: RequestInit) {
     url = process.env.EXPO_PUBLIC_API_URL + url;
-    console.log("URL ", url);
-    console.log("REQ ", requestInit);
 
     try {
       const res = await fetch(url, requestInit);
@@ -26,7 +24,6 @@ class ApiService {
         data,
       };
 
-      console.log("RESPONSE ", response);
       return response;
     } catch (error) {
       console.error("API Request Error:", error);

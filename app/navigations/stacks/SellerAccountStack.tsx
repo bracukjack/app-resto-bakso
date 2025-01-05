@@ -13,46 +13,52 @@ import SellerChangePasswordScreen from "@/app/tabs/seller/account/SellerChangePa
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const SellerAccountStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="SellerAccount" component={SellerAccountScreen} />
+  <Stack.Navigator
+    screenOptions={{ headerShown: false, headerBackTitle: "Kembali" }}
+  >
+    <Stack.Screen
+      name="SellerAccount"
+      component={SellerAccountScreen}
+      options={{ headerShown: true, title: "Akun Penjual" }}
+    />
     <Stack.Screen
       name="EditSellerProfile"
       component={EditProfileScreen}
-      options={{ headerShown: true, title: "Edit Profile" }}
+      options={{ headerShown: true, title: "Edit Profil" }}
     />
 
     <Stack.Screen
       name="ChangePasswordSeller"
       component={SellerChangePasswordScreen}
-      options={{ headerShown: true, title: "Change Password" }}
+      options={{ headerShown: true, title: "Ganti Kata Sandi" }}
     />
 
     <Stack.Screen
       name="TransactionList"
       component={TransactionListScreen}
-      options={{ headerShown: true, title: "Transaction List" }}
+      options={{ headerShown: true, title: "Daftar Transaksi" }}
     />
 
     <Stack.Screen
       name="TransactionHistory"
       component={TransactionHistoryScreen}
-      options={{ headerShown: true, title: "Transaction History" }}
+      options={{ headerShown: true, title: "Riwayat Transaksi" }}
     />
 
     <Stack.Screen
       name="TransactionDetail"
       component={TransactionDetailScreen}
-      options={{ headerShown: true, title: "Transaction Detail" }}
+      options={{ headerShown: true, title: "Detail Transaksi" }}
     />
     <Stack.Screen
       name="RecapitulationList"
       component={RecapitulationListScreen}
-      options={{ headerShown: true, title: "Recapitulation List" }}
+      options={{ headerShown: true, title: "Daftar Laporan" }}
     />
     <Stack.Screen
       name="RecapitulationDetail"
       component={RecapitulationDetailScreen}
-      options={{ headerShown: true, title: "Recapitulation Detail" }}
+      options={{ headerShown: true, title: "Detail Laporan" }}
     />
   </Stack.Navigator>
 );

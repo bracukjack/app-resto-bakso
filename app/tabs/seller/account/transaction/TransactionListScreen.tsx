@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { observer } from "mobx-react-lite";
 import ApiService from "@/service/apiService";
 import { Transaction } from "@/model/transaction";
-import { ScrollView } from "react-native";
+import { Alert, RefreshControl, ScrollView } from "react-native";
 import { StatusOrder } from "@/constants/statusEnums";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -33,25 +33,34 @@ import { set } from "mobx";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Search } from "lucide-react-native";
+import MyLoader from "@/components/shared/Loader";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TransactionListScreen = () => {
-  const tableHeaders = ["Buyer", "Order", "Total", "Status"];
+  const tableHeaders = ["Nama", "Order", "Total", "Status"];
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { token } = useSelector((state: RootState) => state.auth);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"accepted" | "rejected" | null>(
     null
   );
   const [transactionId, setTransactionId] = useState<number | null>(null);
-
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
   >([]);
   const [searchKey, setSearchKey] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const today = new Date().toISOString().split("T")[0];
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchTransactions = async () => {
     try {
@@ -66,7 +75,9 @@ const TransactionListScreen = () => {
         setFilteredTransactions(data); // Initialize filtered transactions
       }
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
+      console.error("Gagal mengambil transaksi:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,8 +110,6 @@ const TransactionListScreen = () => {
     setModalType(null);
   };
 
-  // search function with /transaksi?search= api
-
   useFocusEffect(
     useCallback(() => {
       fetchTransactions();
@@ -109,6 +118,8 @@ const TransactionListScreen = () => {
 
   const handleAccept = async (id: number) => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${id}&status=${StatusOrder.Accepted}`,
@@ -119,8 +130,7 @@ const TransactionListScreen = () => {
         closeModalConfirm();
         fetchTransactions();
       } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
+        Alert.alert("Error", "Token tidak ditemukan. Silakan Login kembali.");
       }
     } catch (error) {
       // Handle error, show message to user, etc.
@@ -129,6 +139,8 @@ const TransactionListScreen = () => {
 
   const handleReject = async (id: number) => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${id}&status=${StatusOrder.Rejected}`,
@@ -139,8 +151,7 @@ const TransactionListScreen = () => {
         closeModalConfirm();
         fetchTransactions();
       } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
+        Alert.alert("Error", "Token tidak ditemukan. Silakan Login kembali.");
       }
     } catch (error) {
       // Handle error, show message to user, etc.
@@ -153,7 +164,9 @@ const TransactionListScreen = () => {
     }, [])
   );
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <>
       <VStack className="px-5 pt-5 pb-20">
         <HStack className="mb-5 w-full gap-3">
@@ -163,7 +176,7 @@ const TransactionListScreen = () => {
               onChangeText={setSearchKey}
               className="py-2"
               type="text"
-              placeholder="Search Customer"
+              placeholder="Cari Nama Pembeli"
             />
           </Input>
 
@@ -186,7 +199,15 @@ const TransactionListScreen = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <ScrollView>
+            <ScrollView
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={["blue"]}
+                />
+              }
+            >
               {transactions
                 .filter((item) => item.transactionDate === today)
                 .map((item, index) => (
@@ -227,7 +248,7 @@ const TransactionListScreen = () => {
                           size="xs"
                           variant="solid"
                         >
-                          <ButtonText>{item.status}</ButtonText>
+                          <ButtonText>Diterima</ButtonText>
                         </Button>
                       ) : item.status === StatusOrder.Rejected ? (
                         <Button
@@ -235,7 +256,7 @@ const TransactionListScreen = () => {
                           size="xs"
                           variant="solid"
                         >
-                          <ButtonText>{item.status}</ButtonText>
+                          <ButtonText>Ditolak</ButtonText>
                         </Button>
                       ) : item.status === StatusOrder.Completed ? (
                         <Button
@@ -243,7 +264,7 @@ const TransactionListScreen = () => {
                           size="xs"
                           variant="solid"
                         >
-                          <ButtonText>{item.status}</ButtonText>
+                          <ButtonText>Berhasil</ButtonText>
                         </Button>
                       ) : item.status === StatusOrder.Complaint ? (
                         <Button
@@ -251,7 +272,7 @@ const TransactionListScreen = () => {
                           size="xs"
                           variant="solid"
                         >
-                          <ButtonText>{item.status}</ButtonText>
+                          <ButtonText>Komplin</ButtonText>
                         </Button>
                       ) : (
                         <Button
@@ -259,7 +280,7 @@ const TransactionListScreen = () => {
                           size="xs"
                           variant="solid"
                         >
-                          <ButtonText>{item.status}</ButtonText>
+                          <ButtonText>Menunggu</ButtonText>
                         </Button>
                       )}
                     </TableData>
@@ -269,7 +290,7 @@ const TransactionListScreen = () => {
               {transactions.length === 0 && (
                 <TableRow>
                   <TableData className="text-sm p-2">
-                    No transaction found
+                    Tidak ada data transaksi
                   </TableData>
                 </TableRow>
               )}
@@ -291,7 +312,7 @@ const TransactionListScreen = () => {
           }
           rejectText="Cancel"
           cancelColor="negative"
-          confirmText={modalType === "accepted" ? "Lanjutkan" : "Lanjutkan"}
+          confirmText={"Lanjutkan"}
           onCancel={closeModal}
           onConfirm={
             modalType === "accepted"
@@ -306,10 +327,10 @@ const TransactionListScreen = () => {
           resource={transactionId}
           showModal={showModalConfirm}
           setShowModal={closeModalConfirm}
-          heading={"Confirm Order"}
-          bodyText={"Confirm Order, Terima atau tolak pesanan ini?"}
-          rejectText="rejected"
-          confirmText={"accepted"}
+          heading={"Konfirmasi Pesanan"}
+          bodyText={"Konfirmasi Pesanan, Terima atau tolak pesanan ini?"}
+          rejectText="Total"
+          confirmText={"Terima"}
           confirmColor="positive"
           cancelColor="negative"
           onCancel={() => openModal("rejected")}

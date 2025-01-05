@@ -1,10 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import TabNavigator from "./TabNavigator";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
 
 export type RootStackParamList = {
   // Customer Account Screens

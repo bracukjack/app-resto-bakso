@@ -1,6 +1,7 @@
 import menuData from "@/app/data/menuDummy";
 import ongkirData from "@/app/data/ongkirDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
+import MyLoader from "@/components/shared/Loader";
 import MenuList from "@/components/shared/MenuList";
 import OngkirComponent from "@/components/shared/OngkirComponent";
 import { Box } from "@/components/ui/box";
@@ -24,7 +25,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useRouter } from "expo-router";
 import { Edit, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SellerOrderScreen = () => {
@@ -36,6 +37,15 @@ const SellerOrderScreen = () => {
 
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   // Fungsi untuk mendapatkan status toko dari API
   const fetchShopStatus = async () => {
@@ -43,7 +53,6 @@ const SellerOrderScreen = () => {
       const response = await ApiService.get("/setting-buka-toko");
       const data = response.data?.data;
 
-      console.log("data", data);
       if (data.value === "1") {
         setIsShopOpen(true);
       } else {
@@ -56,8 +65,6 @@ const SellerOrderScreen = () => {
     }
   };
 
-  console.log("isShopOpen", isShopOpen);
-
   const toggleShopStatus = async (newStatus: any) => {
     try {
       setLoading(true);
@@ -65,7 +72,6 @@ const SellerOrderScreen = () => {
         `/setting-buka-toko?buka=${newStatus ? "1" : "0"}`,
         {}
       );
-      console.log("newStatus", newStatus);
 
       setIsShopOpen(newStatus);
     } catch (error) {
@@ -84,6 +90,8 @@ const SellerOrderScreen = () => {
       }
     } catch (error) {
       console.error("Error fetching menu:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +104,8 @@ const SellerOrderScreen = () => {
       }
     } catch (error) {
       console.error("Error fetching delivery:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,6 +118,8 @@ const SellerOrderScreen = () => {
       }
     } catch (error) {
       console.error("Error fetching delivery:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,6 +132,8 @@ const SellerOrderScreen = () => {
       }
     } catch (error) {
       console.error("Error fetching delivery:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,7 +153,9 @@ const SellerOrderScreen = () => {
     }, [])
   );
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <SafeAreaView>
       <VStack className="w-full p-5 gap-5">
         <Card className="p-2 flex flex-row items-center justify-center gap-2 rounded-md bg-gray-300 shadow-md">
@@ -158,7 +174,16 @@ const SellerOrderScreen = () => {
           />
         </Card>
 
-        <ScrollView className="h-full">
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["blue"]}
+            />
+          }
+          className="h-full"
+        >
           <Box className="flex flex-col gap-5">
             <View>
               <View className="flex flex-row items-center justify-between">
@@ -191,14 +216,6 @@ const SellerOrderScreen = () => {
                 <Text className="text-black mb-3 text-2xl font-bold">
                   KELOLA DELIVERY
                 </Text>
-                <Button
-                  onPress={() => navigation.navigate("CreateDelivery", {})}
-                  action="positive"
-                  variant="link"
-                >
-                  <ButtonText>Add</ButtonText>
-                  <ButtonIcon as={Plus} />
-                </Button>
               </View>
 
               <Grid _extra={{ className: "grid-cols-2" }}>
@@ -227,7 +244,7 @@ const SellerOrderScreen = () => {
 
             <View>
               <Text className="text-black mb-3 text-2xl font-bold">
-                KELOLA PROMO CODE
+                KELOLA KODE PROMO
               </Text>
               <Button
                 onPress={() => navigation.navigate("EditPromo")}

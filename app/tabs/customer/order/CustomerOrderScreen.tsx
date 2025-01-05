@@ -1,14 +1,9 @@
-import menuData from "@/app/data/menuDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
-import Header from "@/components/shared/Header";
+import MyLoader from "@/components/shared/Loader";
 import MenuListH from "@/components/shared/MenuListHorizontal";
-import UploadMedia from "@/components/shared/UploadFile";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Center } from "@/components/ui/center";
-import { Grid, GridItem } from "@/components/ui/grid";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Select,
@@ -36,14 +31,13 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ChevronDownIcon, Frown, Search, Smile } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
+import { RefreshControl } from "react-native";
 import { Alert, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
 const CustomerOrderScreen = () => {
   const [menu, setMenu] = useState<Product[]>([]);
   const [selectedOption, setSelectedOption] = useState<string>("");
-  const [selectedPaymentOption, setSelectedPaymentOption] =
-    useState<string>("");
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState("");
   const [transfer, setTransfer] = useState<Transfer[]>([]);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [delivery, setDelivery] = useState<Delivery[]>([]);
@@ -52,18 +46,25 @@ const CustomerOrderScreen = () => {
   const [truePromo, setTruePromo] = useState("");
   const [isPromoApplied, setIsPromoApplied] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
-  const { token } = useSelector((state: RootState) => state.auth);
   const [profile, setProfile] = useState<User | null>(null);
   const [hargaOngkir, setHargaOngkir] = useState(0);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchShopStatus = async () => {
     try {
       const response = await ApiService.get("/setting-buka-toko");
       const data = response.data?.data;
 
-      console.log("data", data);
       if (data.value === "1") {
         setIsShopOpen(true);
       } else {
@@ -98,15 +99,8 @@ const CustomerOrderScreen = () => {
 
   const fetchProfile = async () => {
     try {
-      if (!token) {
-        console.log("No token found");
-        return;
-      }
-
       const response = await ApiService.get("/profile");
       const data = response.data.data;
-
-      console.log("profile", data);
 
       if (data) {
         setProfile(data);
@@ -147,8 +141,6 @@ const CustomerOrderScreen = () => {
       const response = await ApiService.get("/delivery");
       const data = response.data?.data;
 
-      console.log("data", data);
-
       if (Array.isArray(data)) {
         setDelivery(data);
       }
@@ -158,16 +150,14 @@ const CustomerOrderScreen = () => {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchShopStatus();
-      fetchTransfer();
-      fetchMenu();
-      fetchProfile();
-      fetchDelivery();
-      getOngkir();
-      fetchPromo();
-    }
-  }, [token]);
+    fetchShopStatus();
+    fetchTransfer();
+    fetchMenu();
+    fetchProfile();
+    fetchDelivery();
+    getOngkir();
+    fetchPromo();
+  }, []);
 
   const handleQtyChange = (id: number, qty: number) => {
     setQuantities((prevQuantities) => ({
@@ -229,47 +219,38 @@ const CustomerOrderScreen = () => {
       const response = await ApiService.post("/transaksi", body);
 
       if (response.status === 200 || response.status === 201) {
-        Alert.alert(
-          "Order Sukses",
-          "Cek pada Account di Transaction On Going",
-          [
-            {
-              text: "OK",
-              onPress: () => navigation.navigate("OnGoingList"), // Ganti dengan nama screen tujuan
+        Alert.alert("Order Sukses", "Cek pada Akun di Transaksi Berlangsung", [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "CustomerOrder" }],
+              });
             },
-          ]
-        );
+          },
+        ]);
 
+        // Reset state lokal
         setQuantities((prevQuantities) => {
           const newQuantities = { ...prevQuantities };
           menu.forEach((item) => {
-            newQuantities[item.id] = 0; // Reset all quantities to 0
+            newQuantities[item.id] = 0; // Reset semua quantity ke 0
           });
           return newQuantities;
         });
         setIsPromoApplied(false);
         setPromoCode("");
         setTruePromo("");
-        setSelectedOption(""); // Reset selected delivery option
-        setSelectedPaymentOption(""); // Reset selected payment option
+        setSelectedOption(""); // Reset opsi pengiriman
+        setSelectedPaymentOption(""); // Reset opsi pembayaran
       } else {
-        alert("Failed to process order");
+        alert("Gagal memproses order. Silakan coba lagi.");
       }
     } catch (error) {
-      console.error("Error submitting order:", error);
-      alert("An error occurred while processing your order");
+      alert("Terjadi kesalahan saat memproses pesanan Anda");
     }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log("Screen baru difokuskan");
-
-      return () => {
-        // Cleanup if necessary
-      };
-    }, [])
-  );
 
   const handleCheckPromo = () => {
     const matchedPromo = promo.find((item) => item.syarat_promo === promoCode);
@@ -285,9 +266,19 @@ const CustomerOrderScreen = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["blue"]}
+          />
+        }
+      >
         {isShopOpen ? (
           <VStack space="md" className="p-5">
             {menu.map((item, index) => (
@@ -298,6 +289,7 @@ const CustomerOrderScreen = () => {
                 title={item.nama_produk}
                 price={item.harga}
                 stok={item.stok}
+                quantity={quantities[item.id] || 0}
                 onQtyChange={handleQtyChange}
               />
             ))}
@@ -351,7 +343,7 @@ const CustomerOrderScreen = () => {
                   onValueChange={handleSelectPaymentChange}
                 >
                   <SelectTrigger variant="outline" size="md">
-                    <SelectInput placeholder="Cash/Transfer" />
+                    <SelectInput placeholder={"Cash/Transfer"} />
                     <SelectIcon className="mr-3" as={ChevronDownIcon} />
                   </SelectTrigger>
                   <SelectPortal>
@@ -383,7 +375,7 @@ const CustomerOrderScreen = () => {
 
               <View>
                 <View className="flex flex-row justify-between mt-5">
-                  <Text className="font-bold text-gray-600">SUB TOTAL</Text>
+                  <Text className="font-bold text-gray-600">TOTAL</Text>
 
                   <Text className="font-bold text-gray-600">
                     {formatRupiah(totalAmount)}
@@ -392,7 +384,9 @@ const CustomerOrderScreen = () => {
 
                 {selectedOption === "delivery" && (
                   <View className="flex flex-row justify-between">
-                    <Text className="font-semibold text-gray-600">ONGKIR</Text>
+                    <Text className="font-semibold text-gray-600">
+                      ONGKOS KIRIM
+                    </Text>
                     <Text className="font-semibold text-gray-600">
                       {isPromoApplied
                         ? formatRupiah(0)
@@ -402,7 +396,7 @@ const CustomerOrderScreen = () => {
                 )}
                 <View className="flex flex-row justify-between">
                   <Text className="font-bold text-green-600 text-lg">
-                    GRAND TOTAL
+                    TOTAL BAYAR
                   </Text>
                   <Text className="font-bold text-green-600 text-lg">
                     {formatRupiah(
@@ -421,7 +415,7 @@ const CustomerOrderScreen = () => {
                 className="mt-5"
                 onPress={submitOrder}
               >
-                <ButtonText>Process Order</ButtonText>
+                <ButtonText>BUAT PESANAN</ButtonText>
               </Button>
             </VStack>
           </VStack>

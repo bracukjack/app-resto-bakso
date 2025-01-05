@@ -26,7 +26,7 @@ const ChangePasswordScreen = () => {
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmNewPassword) {
-      setError("Passwords do not match.");
+      setError("Kata sandi tidak cocok.");
       return;
     }
 
@@ -36,7 +36,7 @@ const ChangePasswordScreen = () => {
     try {
       const token = await AsyncStorage.getItem("token");
       if (!token) {
-        setError("User not authenticated.");
+        setError("Pengguna tidak diautentikasi.");
         setLoading(false);
         return;
       }
@@ -52,17 +52,17 @@ const ChangePasswordScreen = () => {
 
       if (response.status === 200 || response.status === 201) {
         // Handle success, misalnya redirect ke halaman profile
-        Alert.alert("Sukses", "Password berhasil diupdate!", [
+        Alert.alert("Sukses", "Kata Sandi berhasil diubah!", [
           {
             text: "OK",
             onPress: () => navigation.navigate("CustomerAccount"),
           },
         ]);
       } else {
-        console.log("Failed to change password:");
+        console.log("Gagal mengubah kata sandi:");
       }
     } catch (error) {
-      setError("An error occurred while changing password.");
+      setError("Terjadi kesalahan saat mengubah kata sandi.");
       console.error("Error:", error);
     } finally {
       setLoading(false);
@@ -74,14 +74,14 @@ const ChangePasswordScreen = () => {
       <Center>
         <Box className="p-5 w-full">
           <VStack className="pb-4" space="xs">
-            <Heading className="leading-[30px]">Set new password</Heading>
+            <Heading className="leading-[30px]">Ganti Kata Sandi</Heading>
           </VStack>
           <VStack space="xl" className="py-2">
             <Input className="border focus:border-cyan-600">
               <InputField
                 className="py-2"
                 type="text"
-                placeholder="New Password"
+                placeholder="Kata Sandi Baru"
                 value={newPassword}
                 onChangeText={setNewPassword}
               />
@@ -90,7 +90,7 @@ const ChangePasswordScreen = () => {
               <InputField
                 className="py-2"
                 type="text"
-                placeholder="Confirm Password"
+                placeholder="Konfirmasi Kata Sandi"
                 value={confirmNewPassword}
                 onChangeText={setConfirmNewPassword}
               />
@@ -98,8 +98,12 @@ const ChangePasswordScreen = () => {
           </VStack>
 
           <VStack space="lg" className="pt-4">
-            <Button size="sm" onPress={handleChangePassword}>
-              <ButtonText>Submit</ButtonText>
+            <Button
+              size="sm"
+              className="bg-cyan-600"
+              onPress={handleChangePassword}
+            >
+              <ButtonText>Simpan</ButtonText>
             </Button>
           </VStack>
         </Box>

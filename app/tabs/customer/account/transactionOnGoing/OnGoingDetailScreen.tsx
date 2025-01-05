@@ -1,10 +1,7 @@
-import transactionData from "@/app/data/transactionDummy";
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
 import AppModal from "@/components/shared/AppModal";
-import Header from "@/components/shared/Header";
-import { Alert, AlertText } from "@/components/ui/alert";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Divider } from "@/components/ui/divider";
+import MyLoader from "@/components/shared/Loader";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Grid, GridItem } from "@/components/ui/grid";
 import { HStack } from "@/components/ui/hstack";
 import {
@@ -21,17 +18,19 @@ import { VStack } from "@/components/ui/vstack";
 import { StatusOrder } from "@/constants/statusEnums";
 import { Transaction } from "@/model/transaction";
 import ApiService from "@/service/apiService";
-import { RootState } from "@/store";
 import { formatRupiah } from "@/utils/formatCurrency";
-import { RouteProp, useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useRouter } from "expo-router";
 import { Printer } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Linking, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { WebView } from "react-native-webview";
-import { useSelector } from "react-redux";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  View,
+} from "react-native";
 
 type OnGoingDetailProps = NativeStackScreenProps<
   RootStackParamList,
@@ -39,15 +38,23 @@ type OnGoingDetailProps = NativeStackScreenProps<
 >;
 
 const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
-  const tableHeaders = ["Product", "Qty", "Price"];
+  const tableHeaders = ["Produk", "Jumlah", "Harga"];
   const { transactionId } = route.params;
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showModalCancel, setShowModalCancel] = useState(false);
   const [modalType, setModalType] = useState<
     StatusOrder.Completed | StatusOrder.Complaint | null
   >(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { token } = useSelector((state: RootState) => state.auth);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const handlePrint = async () => {
     const fileUrl = `https://resto-bakso.redseal.cloud/api/v1/invoice/${transaction?.transactionNumber}`;
@@ -55,9 +62,7 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
     if (supported) {
       Linking.openURL(fileUrl);
     } else {
-      <Alert className="alert">
-        <AlertText>Cannot open this URL.</AlertText>
-      </Alert>;
+      Alert.alert("Tidak Dapat Membuka URL Ini");
     }
   };
 
@@ -66,13 +71,13 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
       const response = await ApiService.get(`/transaksi/${id}`);
       const data = response.data?.data;
 
-      console.log("Detail ", data);
-
       if (data) {
         setTransaction(data);
       }
     } catch (error) {
-      console.error("Failed to fetch transaction by ID:", error);
+      console.error("Gagal mengambil transaksi berdasarkan ID:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,6 +86,14 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
       fetchTransactionById(transactionId);
     }
   }, [transactionId]);
+
+  const openModalCancel = () => {
+    setShowModalCancel(true);
+  };
+
+  const closeModalCancel = () => {
+    setShowModalCancel(false);
+  };
 
   const openModal = (type: StatusOrder.Completed | StatusOrder.Complaint) => {
     setModalType(type);
@@ -94,6 +107,8 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
 
   const handleCompleted = async () => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${transactionId}&status=${StatusOrder.Completed}`,
@@ -103,17 +118,18 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
         // Handle success, close modal, update state, etc.
         closeModal();
         fetchTransactionById(transactionId);
-      } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
       }
     } catch (error) {
       // Handle error, show message to user, etc.
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleComplaint = async () => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${transactionId}&status=${StatusOrder.Complaint}`,
@@ -123,17 +139,47 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
         // Handle success, close modal, update state, etc.
         closeModal();
         fetchTransactionById(transactionId);
-      } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
       }
     } catch (error) {
       // Handle error, show message to user, etc.
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <ScrollView>
+  const handleCancel = async (id: number) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (token) {
+        await ApiService.put(
+          `/transaksi-update-status?transaksi_id=${id}&status=${StatusOrder.Rejected}`,
+          {},
+          token
+        );
+        // Handle success, close modal, update state, etc.
+        closeModalCancel();
+        fetchTransactionById(transactionId);
+      }
+    } catch (error) {
+      // Handle error, show message to user, etc.
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return loading ? (
+    <MyLoader />
+  ) : (
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["blue"]}
+        />
+      }
+    >
       <VStack className="p-5">
         <View className="flex flex-col gap-1 justify-start items-start mb-5">
           <Text className="text-blue-500 font-bold text-lg">
@@ -177,8 +223,8 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
             </TableFooter>
           </Table>
         </View>
-        <Text className="text-lg font-bold mb-5 mt-5">
-          Adress : {transaction?.customerAddress}
+        <Text className="text-lg font-bold mb-5 mt-5 capitalize">
+          Alamat : {transaction?.customerAddress}
         </Text>
 
         <HStack className="flex flex-row gap-5 ">
@@ -195,13 +241,13 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
 
         <View className="flex flex-row gap-3 items-center">
           <Text className="text-lg mb-2 mt-2">Metode Pembayaran :</Text>
-          <Text className="text-xl font-bold mb-2 mt-2 text-cyan-600">
+          <Text className="text-xl font-bold mb-2 mt-2 text-cyan-600 capitalize">
             {transaction?.paymentMethod}
           </Text>
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mt-2">ONGKIR:</Text>
+          <Text className="text-xl font-bold mt-2">ONGKOS KIRIM:</Text>
 
           <Text className="text-xl font-bold mt-2 text-blue-600">
             {formatRupiah(
@@ -212,7 +258,7 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
         </View>
 
         <View className="flex flex-row gap-3 items-center justify-end">
-          <Text className="text-xl font-bold mb-5 mt-2">TOTAL:</Text>
+          <Text className="text-xl font-bold mb-5 mt-2">TOTAL BAYAR:</Text>
 
           <Text className="text-xl font-bold mb-5 mt-2 text-green-600">
             {formatRupiah(transaction?.totalAmountAfterPromo || 0)}
@@ -239,13 +285,23 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
 
         {transaction?.status === StatusOrder.Completed && (
           <Button disabled variant="solid" className="bg-blue-500">
-            <ButtonText> COMPLETED </ButtonText>
+            <ButtonText> BERHASIL </ButtonText>
           </Button>
         )}
 
         {transaction?.status === StatusOrder.Complaint && (
           <Button disabled variant="solid" className="bg-red-500">
-            <ButtonText> COMPLAIN </ButtonText>
+            <ButtonText> KOMPLIN </ButtonText>
+          </Button>
+        )}
+
+        {transaction?.status === StatusOrder.Pending && (
+          <Button
+            onPress={() => openModalCancel()}
+            variant="solid"
+            className="mr-1 mt-5 bg-red-500"
+          >
+            <ButtonText> BATALKAN PESANAN </ButtonText>
           </Button>
         )}
 
@@ -260,7 +316,7 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
                 variant="solid"
                 className="bg-blue-500"
               >
-                <ButtonText> COMPLETED </ButtonText>
+                <ButtonText> SELESAI </ButtonText>
               </Button>
             </GridItem>
 
@@ -270,7 +326,7 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
                 variant="solid"
                 className="bg-red-500"
               >
-                <ButtonText> COMPLAIN </ButtonText>
+                <ButtonText> KOMPLIN </ButtonText>
               </Button>
             </GridItem>
           </Grid>
@@ -284,24 +340,40 @@ const OnGoingDetailScreen = ({ route }: OnGoingDetailProps) => {
           <Printer size={20} color="#fff" />
           <Text className="text-white ml-2">PRINT</Text>
         </Button>
-        {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
+        {loading && <ActivityIndicator size="large" color="#0000ff" />}
       </VStack>
+
+      {showModalCancel && (
+        <AppModal
+          showModal={showModalCancel}
+          setShowModal={closeModalCancel}
+          heading={"BATALKAN PESANAN"}
+          bodyText={
+            "Apakah Anda Yakin Ingin Membatalkan Pesanan Ini? Klik Tombol “LANJUTKAN” Untuk Membatalkan Pesanan"
+          }
+          rejectText="KEMBALI"
+          cancelColor="negative"
+          confirmText={"LANJUTKAN"}
+          onCancel={closeModalCancel}
+          onConfirm={() =>
+            transactionId !== null && handleCancel(transactionId)
+          }
+        />
+      )}
 
       {showModal && (
         <AppModal
           showModal={showModal}
           setShowModal={closeModal}
-          heading={modalType === StatusOrder.Completed ? "Selesai" : "Komplin"}
+          heading={modalType === StatusOrder.Completed ? "SELESAI" : "KOMPLIN"}
           bodyText={
             modalType === StatusOrder.Completed
-              ? "Pastikan Ketersediaan Produk & Informasi Pesanan, Klik Tombol “Lanjutkan” Untuk Menerima Pesanan"
-              : "Hubungi Pembeli Mengenai Alasan Tolak Pesanan, Klik Tombol “Lanjutkan” Untuk Menolak Pesanan"
+              ? "Apakah Anda Yakin Ingin Menyelesaikan Pesanan Ini? Klik Tombol “LANJUTKAN” Untuk Menyelesaikan Pesanan"
+              : "Apakah Anda Yakin Ingin Komplin Pesanan Ini? Klik Tombol “LANJUTKAN” Untuk Komplin Pesanan"
           }
-          rejectText="Cancel"
+          rejectText="KEMBALI"
           cancelColor="negative"
-          confirmText={
-            modalType === StatusOrder.Completed ? "Lanjutkan" : "Lanjutkan"
-          }
+          confirmText={"LANJUTKAN"}
           onCancel={closeModal}
           onConfirm={
             modalType === StatusOrder.Completed

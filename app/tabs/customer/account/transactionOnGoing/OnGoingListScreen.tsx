@@ -1,4 +1,5 @@
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
+import MyLoader from "@/components/shared/Loader";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Pressable } from "@/components/ui/pressable";
 import {
@@ -14,42 +15,51 @@ import { VStack } from "@/components/ui/vstack";
 import { StatusOrder } from "@/constants/statusEnums";
 import { Transaction } from "@/model/transaction";
 import ApiService from "@/service/apiService";
-import { RootState } from "@/store";
 import { formatRupiah } from "@/utils/formatCurrency";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { Navigation } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
 
 const OnGoingListScreen = () => {
-  const tableHeaders = ["Buyer", "Order", "Total", "status"];
-  const { email } = useSelector((state: RootState) => state.auth);
+  const tableHeaders = ["Nama", "Order", "Total", "Status"];
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchTransactions = async () => {
     try {
+      const storedEmail = await AsyncStorage.getItem("email");
+
       const response = await ApiService.get("/transaksi");
       const data = response.data?.data;
 
-      console.log("email ", email);
-
+      // Filter data berdasarkan email dari AsyncStorage
       const filteredData = data.filter(
         (transaction: Transaction) =>
           transaction.status !== StatusOrder.Completed &&
           transaction.status !== StatusOrder.Complaint &&
-          transaction.customerEmail === email
+          transaction.customerEmail === storedEmail
       );
-      console.log("DATA ", filteredData);
 
       if (Array.isArray(filteredData)) {
         setTransactions(filteredData);
       }
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,9 +67,25 @@ const OnGoingListScreen = () => {
     fetchTransactions();
   }, []);
 
-  return (
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions();
+    }, [])
+  );
+
+  return loading ? (
+    <MyLoader />
+  ) : (
     <VStack className="p-5">
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["blue"]}
+          />
+        }
+      >
         <Table className="w-full">
           <TableHeader>
             <TableRow>

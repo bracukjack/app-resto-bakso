@@ -4,7 +4,7 @@ import { Image } from "../ui/image";
 import { Text } from "../ui/text";
 import { Button, ButtonIcon } from "../ui/button";
 import { Minus, Plus } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatRupiah } from "@/utils/formatCurrency";
 
 type MenuListHProps = {
@@ -13,6 +13,7 @@ type MenuListHProps = {
   price?: number;
   id: number;
   stok?: number;
+  quantity: number; // Add this prop
   onQtyChange: (id: number, qty: number) => void;
 };
 
@@ -22,9 +23,15 @@ const MenuListH: React.FC<MenuListHProps> = ({
   price,
   id,
   stok,
+  quantity,
   onQtyChange,
 }) => {
-  const [qty, setQty] = useState<number>(0);
+  const [qty, setQty] = useState<number>(quantity);
+
+  // Update qty when quantity prop changes
+  useEffect(() => {
+    setQty(quantity);
+  }, [quantity]);
 
   const increment = () => {
     if (stok !== undefined && qty < stok) {
@@ -43,6 +50,7 @@ const MenuListH: React.FC<MenuListHProps> = ({
   };
 
   const total = price ? price * qty : 0;
+
   return (
     <View>
       <Card
@@ -114,8 +122,6 @@ const MenuListH: React.FC<MenuListHProps> = ({
           ""
         )}
       </Card>
-
-      {}
     </View>
   );
 };

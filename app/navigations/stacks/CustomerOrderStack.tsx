@@ -8,7 +8,9 @@ import OnGoingDetailScreen from "@/app/tabs/customer/account/transactionOnGoing/
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const CustomerOrderStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator
+    screenOptions={{ headerShown: false, headerBackTitle: "Kembali" }}
+  >
     <Stack.Screen
       name="CustomerOrder"
       component={CustomerOrderScreen}
@@ -17,13 +19,13 @@ const CustomerOrderStack = () => (
     <Stack.Screen
       name="OnGoingList"
       component={OnGoingListScreen}
-      options={{ headerShown: true, title: "Transaction On Going List" }}
+      options={{ headerShown: true, title: "Transaksi Berlangsung" }}
     />
 
     <Stack.Screen
       name="OnGoingDetail"
       component={OnGoingDetailScreen}
-      options={{ headerShown: true, title: "Transaction On Going Detail" }}
+      options={{ headerShown: true, title: "Transaksi Detail" }}
     />
   </Stack.Navigator>
 );

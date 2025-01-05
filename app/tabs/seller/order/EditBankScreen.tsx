@@ -67,21 +67,17 @@ const EditBankScreen = () => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        Alert.alert("Success", "Bank account updated successfully.", [
+        Alert.alert("Berhasil", "Bank Akun berhasil diperbaharui.", [
           {
             text: "OK",
             onPress: () => navigation.navigate("SellerOrder"),
           },
         ]);
       } else {
-        Alert.alert("Error", "Failed to update bank account.");
+        Alert.alert("Error", "Gagal memperbaharui bank akun, coba lagi.");
       }
     } catch (error) {
-      console.error("Error updating bank account:", error);
-      Alert.alert(
-        "Error",
-        "An error occurred while updating the bank account."
-      );
+      Alert.alert("Error", "Terjadi kesalahan saat memperbarui bank akun.");
     }
   };
 
@@ -95,7 +91,7 @@ const EditBankScreen = () => {
         <InputField
           className="py-2"
           type="text"
-          placeholder="Bank Account Number"
+          placeholder="Nomor Rekening Bank"
           value={bankAccountNumber}
           onChangeText={setBankAccountNumber}
         />
@@ -105,7 +101,7 @@ const EditBankScreen = () => {
         <InputField
           className="py-2"
           type="text"
-          placeholder="Bank Account Name"
+          placeholder="Nama Rekening Bank"
           value={bankAccountName}
           onChangeText={setBankAccountName}
         />
@@ -114,14 +110,14 @@ const EditBankScreen = () => {
         <InputField
           className="py-2"
           type="text"
-          placeholder="Bank Name"
+          placeholder="Nama Bank"
           value={bankName}
           onChangeText={setBankName}
         />
       </Input>
 
       <Button onPress={handleSubmit} className="bg-cyan-600" size="sm">
-        <ButtonText>Submit</ButtonText>
+        <ButtonText>Simpan</ButtonText>
       </Button>
     </VStack>
   );

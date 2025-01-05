@@ -12,41 +12,43 @@ import ChangePasswordScreen from "@/app/tabs/customer/account/ChangePasswordScre
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const CustomerAccountStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator
+    screenOptions={{ headerShown: false, headerBackTitle: "Kembali" }}
+  >
     <Stack.Screen
       name="CustomerAccount"
       component={CustomerAccountScreen}
-      options={{ headerShown: true, title: "Customer Account" }}
+      options={{ headerShown: true, title: "Akun Pembeli" }}
     />
     <Stack.Screen
       name="EditProfile"
       component={EditProfileScreen}
-      options={{ headerShown: true, title: "Edit Profile" }}
+      options={{ headerShown: true, title: "Edit Profil" }}
     />
     <Stack.Screen
       name="ChangePassword"
       component={ChangePasswordScreen}
-      options={{ headerShown: true, title: "Change Password" }}
+      options={{ headerShown: true, title: "Ganti Kata Sandi" }}
     />
     <Stack.Screen
       name="OnGoingList"
       component={OnGoingListScreen}
-      options={{ headerShown: true, title: "Transaction On Going List" }}
+      options={{ headerShown: true, title: "Transaksi Berlangsung" }}
     />
     <Stack.Screen
       name="OnGoingDetail"
       component={OnGoingDetailScreen}
-      options={{ headerShown: true, title: "Transaction On Going Detail" }}
+      options={{ headerShown: true, title: "Transaksi Detail" }}
     />
     <Stack.Screen
       name="CompletedList"
       component={CompletedListScreen}
-      options={{ headerShown: true, title: "Transaction Completed List" }}
+      options={{ headerShown: true, title: "Transaksi Selesai" }}
     />
     <Stack.Screen
       name="CompletedDetail"
       component={CompletedDetailScreen}
-      options={{ headerShown: true, title: "Transaction Completed Detail" }}
+      options={{ headerShown: true, title: "Transaksi Detail" }}
     />
   </Stack.Navigator>
 );

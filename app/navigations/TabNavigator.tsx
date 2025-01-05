@@ -1,7 +1,4 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import CustomerOrderScreen from "../tabs/customer/order/CustomerOrderScreen";
-import SellerOrderScreen from "../tabs/seller/order/SellerOrderScreen";
-import SellerAccountScreen from "../tabs/seller/account/SellerAccountScreen";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useEffect, useState } from "react";
@@ -13,38 +10,40 @@ import SellerAccountStack from "./stacks/SellerAccountStack";
 import SellerOrderStack from "./stacks/SellerOrderStack";
 import CustomerOrderStack from "./stacks/CustomerOrderStack";
 import { Home, User2 } from "lucide-react-native";
-
+import React from "react";
+import { SafeAreaView, StyleSheet, View } from "react-native";
+import MyLoader from "@/components/shared/Loader";
+import { Colors } from "@/constants/Theme";
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const TabNavigator = () => {
-  const { token } = useSelector((state: RootState) => state.auth);
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
 
   const fetchProfile = async () => {
     try {
-      if (!token) {
-        console.log("No token found");
-        return;
-      }
-
       const response = await ApiService.get("/profile");
       const data = response.data.data;
 
       if (data) {
         setProfile(data);
       } else {
-        console.log("Profile not found or invalid response");
+        console.log("Profil tidak ditemukan atau respons tidak valid");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Terjadi kesalahan saat mengambil data profil:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
-  }, [token]);
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <MyLoader />;
+  }
 
   return (
     <Tab.Navigator>
@@ -74,7 +73,7 @@ const TabNavigator = () => {
               tabBarLabelStyle: {
                 fontSize: 12,
               },
-              tabBarLabel: "Account",
+              tabBarLabel: "Akun",
               headerShown: false,
             }}
           />
@@ -105,7 +104,7 @@ const TabNavigator = () => {
               tabBarLabelStyle: {
                 fontSize: 12,
               },
-              tabBarLabel: "Account",
+              tabBarLabel: "Akun",
               headerShown: false,
             }}
           />

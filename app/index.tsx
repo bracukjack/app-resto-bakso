@@ -2,11 +2,15 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { Colors } from "@/constants/Theme";
 import AuthNavigator from "./navigations/AuthNavigator";
 import { NavigationContainer } from "@react-navigation/native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import AppNavigator from "./navigations/AppNavigator";
 
 import { LogBox } from "react-native";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { login } from "@/store/authSlice";
+import MyLoader from "@/components/shared/Loader";
 
 // Hanya sembunyikan pesan spesifik
 LogBox.ignoreLogs([
@@ -14,7 +18,29 @@ LogBox.ignoreLogs([
 ]);
 
 export default function Page() {
-  const { token } = useSelector((state: RootState) => state.auth);
+  // get token from async storage
+
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        if (storedToken) {
+          dispatch(login({ token: storedToken }));
+        }
+      } catch (error) {
+        console.error("Failed to load token:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchToken();
+  }, [dispatch]);
 
   return (
     <NavigationContainer>
@@ -22,9 +48,13 @@ export default function Page() {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.container}>
-          {token ? <AppNavigator /> : <AuthNavigator />}
-        </View>
+        {loading ? (
+          <MyLoader />
+        ) : (
+          <View style={styles.container}>
+            {token ? <AppNavigator /> : <AuthNavigator />}
+          </View>
+        )}
       </KeyboardAvoidingView>
     </NavigationContainer>
   );

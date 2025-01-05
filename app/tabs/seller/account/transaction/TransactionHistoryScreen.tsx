@@ -16,7 +16,7 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import ApiService from "@/service/apiService";
 import { Transaction } from "@/model/transaction";
-import { ScrollView, View } from "react-native";
+import { Alert, RefreshControl, ScrollView, View } from "react-native";
 import { StatusOrder } from "@/constants/statusEnums";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -27,11 +27,12 @@ import { RootState } from "@/store";
 import { Input, InputField } from "@/components/ui/input";
 import { Search } from "lucide-react-native";
 import { HStack } from "@/components/ui/hstack";
+import MyLoader from "@/components/shared/Loader";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TransactionHistoryScreen = () => {
-  const tableHeaders = ["Buyer", "Order", "Total", "Status"];
+  const tableHeaders = ["Nama", "Order", "Total", "Status"];
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { token } = useSelector((state: RootState) => state.auth);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"accepted" | "rejected" | null>(
     null
@@ -44,6 +45,16 @@ const TransactionHistoryScreen = () => {
     Transaction[]
   >([]);
   const [searchKey, setSearchKey] = useState<string>("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const fetchTransactions = async () => {
     try {
@@ -55,13 +66,11 @@ const TransactionHistoryScreen = () => {
         setFilteredTransactions(data); // Initialize filtered transactions
       }
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
+      console.error("Gagal mengambil transaksi:", error);
+    } finally {
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
 
   const handleSearch = () => {
     const filtered = transactions.filter((item) =>
@@ -96,6 +105,8 @@ const TransactionHistoryScreen = () => {
 
   const handleAccept = async (id: number) => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${id}&status=${StatusOrder.Accepted}`,
@@ -106,8 +117,7 @@ const TransactionHistoryScreen = () => {
         closeModalConfirm();
         fetchTransactions();
       } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
+        Alert.alert("Error", "Token tidak ditemukan. Silakan Login kembali.");
       }
     } catch (error) {
       // Handle error, show message to user, etc.
@@ -116,6 +126,8 @@ const TransactionHistoryScreen = () => {
 
   const handleReject = async (id: number) => {
     try {
+      const token = await AsyncStorage.getItem("token");
+
       if (token) {
         await ApiService.put(
           `/transaksi-update-status?transaksi_id=${id}&status=${StatusOrder.Rejected}`,
@@ -126,8 +138,7 @@ const TransactionHistoryScreen = () => {
         closeModalConfirm();
         fetchTransactions();
       } else {
-        // Handle the case when token is undefined or null
-        // You can show an error message or take any other appropriate action
+        Alert.alert("Error", "Token tidak ditemukan. Silakan Login kembali.");
       }
     } catch (error) {
       // Handle error, show message to user, etc.
@@ -140,7 +151,9 @@ const TransactionHistoryScreen = () => {
     }, [])
   );
 
-  return (
+  return loading ? (
+    <MyLoader />
+  ) : (
     <>
       <VStack className="px-5 pt-5 pb-20">
         <HStack className="mb-5 w-full gap-3">
@@ -150,7 +163,7 @@ const TransactionHistoryScreen = () => {
               onChangeText={setSearchKey}
               className="py-2"
               type="text"
-              placeholder="Search Customer"
+              placeholder="Cari Nama Pembeli"
             />
           </Input>
 
@@ -173,7 +186,15 @@ const TransactionHistoryScreen = () => {
             </TableRow>
           </TableHeader>
           <TableBody className="mb-40">
-            <ScrollView>
+            <ScrollView
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={["blue"]}
+                />
+              }
+            >
               {filteredTransactions.map((item, index) => (
                 <TableRow key={index}>
                   <TableData className=" text-sm font-bold text-blue-500 p-2">
@@ -212,7 +233,7 @@ const TransactionHistoryScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText>Diterima</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Rejected ? (
                       <Button
@@ -220,7 +241,7 @@ const TransactionHistoryScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText>Ditolak</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Completed ? (
                       <Button
@@ -228,7 +249,7 @@ const TransactionHistoryScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText>Berhasil</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Complaint ? (
                       <Button
@@ -236,7 +257,7 @@ const TransactionHistoryScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText>Komplin</ButtonText>
                       </Button>
                     ) : (
                       <Button
@@ -244,7 +265,7 @@ const TransactionHistoryScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText>Menunggu</ButtonText>
                       </Button>
                     )}
                   </TableData>
@@ -254,7 +275,7 @@ const TransactionHistoryScreen = () => {
               {transactions.length === 0 && (
                 <TableRow>
                   <TableData className="text-sm p-2">
-                    No transaction found
+                    Tidak ada data transaksi
                   </TableData>
                 </TableRow>
               )}
@@ -268,7 +289,9 @@ const TransactionHistoryScreen = () => {
           resource={transactionId}
           showModal={showModal}
           setShowModal={closeModal}
-          heading={modalType === "accepted" ? "TERIMA PESANAN" : "Rejected"}
+          heading={
+            modalType === "accepted" ? "TERIMA PESANAN" : "TOLAK PESANAN"
+          }
           bodyText={
             modalType === "accepted"
               ? "Pastikan Ketersediaan Produk & Informasi Pesanan, Klik Tombol “Lanjutkan” Untuk Menerima Pesanan"
@@ -276,7 +299,7 @@ const TransactionHistoryScreen = () => {
           }
           rejectText="Cancel"
           cancelColor="negative"
-          confirmText={modalType === "accepted" ? "Lanjutkan" : "Lanjutkan"}
+          confirmText={"Lanjutkan"}
           onCancel={closeModal}
           onConfirm={
             modalType === "accepted"
@@ -291,8 +314,8 @@ const TransactionHistoryScreen = () => {
           resource={transactionId}
           showModal={showModalConfirm}
           setShowModal={closeModalConfirm}
-          heading={"Confirm Order"}
-          bodyText={"Confirm Order, Terima atau tolak pesanan ini?"}
+          heading={"Konfirmasi Pesanan"}
+          bodyText={"Konfirmasi Pesanan, Terima atau tolak pesanan ini?"}
           rejectText="rejected"
           confirmText={"accepted"}
           confirmColor="positive"
