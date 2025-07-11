@@ -1,4 +1,5 @@
 import { RootStackParamList } from "@/app/navigations/AuthNavigator";
+import ImagePreviewModal from "@/components/shared/ImagePreviewModal";
 import MyLoader from "@/components/shared/Loader";
 import { Button, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
@@ -144,11 +145,17 @@ const CompletedDetailScreen = ({ route }: OnGoingDetailProps) => {
         </HStack>
 
         <View className="flex flex-row gap-3 items-center">
-          <Text className="text-lg mb-5 mt-5">Metode Pembayaran :</Text>
-          <Text className="text-xl font-bold mb-5 mt-5 text-cyan-600 capitalize">
+          <Text className="text-lg mb-2 mt-2">Metode Pembayaran :</Text>
+          <Text className="text-xl font-bold mb-2 mt-2 text-cyan-600 capitalize">
             {transaction?.paymentMethod}
           </Text>
         </View>
+
+        {transaction?.buktiPembayaranUrl && (
+          <HStack space="xl">
+            <ImagePreviewModal imageUrl={transaction?.buktiPembayaranUrl} />
+          </HStack>
+        )}
 
         <View className="flex flex-row gap-3 items-center justify-end">
           <Text className="text-xl font-bold mt-2">ONGKOS KIRIM:</Text>

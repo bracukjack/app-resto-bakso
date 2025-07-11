@@ -7,27 +7,29 @@ import { RootState } from "@/store";
 import AppNavigator from "./navigations/AppNavigator";
 
 import { LogBox } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { login } from "@/store/authSlice";
-import MyLoader from "@/components/shared/Loader";
+import * as SplashScreen from "expo-splash-screen";
 
 // Hanya sembunyikan pesan spesifik
-LogBox.ignoreLogs([
-  "The action 'REPLACE' with payload", // Pesan error yang ingin Anda sembunyikan
-]);
+LogBox.ignoreLogs(["The action 'REPLACE' with payload"]);
+
+// Mencegah splash screen menghilang secara otomatis
+SplashScreen.preventAutoHideAsync();
 
 export default function Page() {
-  // get token from async storage
-
-  const [loading, setLoading] = useState(true);
+  const [appReady, setAppReady] = useState(false);
   const dispatch = useDispatch();
-
   const token = useSelector((state: RootState) => state.auth.token);
 
   useEffect(() => {
-    const fetchToken = async () => {
+    const prepareApp = async () => {
       try {
+        // Tunggu minimal 2 detik sebelum lanjut
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Ambil token dari AsyncStorage
         const storedToken = await AsyncStorage.getItem("token");
         if (storedToken) {
           dispatch(login({ token: storedToken }));
@@ -35,26 +37,34 @@ export default function Page() {
       } catch (error) {
         console.error("Failed to load token:", error);
       } finally {
-        setLoading(false);
+        setAppReady(true);
       }
     };
 
-    fetchToken();
+    prepareApp();
   }, [dispatch]);
+
+  // Sembunyikan splash screen setelah aplikasi siap
+  const onLayoutRootView = useCallback(async () => {
+    if (appReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [appReady]);
+
+  if (!appReady) {
+    return null; // Biarkan splash screen tetap muncul sampai proses selesai
+  }
 
   return (
     <NavigationContainer>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        onLayout={onLayoutRootView} // Panggil fungsi untuk menyembunyikan splash screen
       >
-        {loading ? (
-          <MyLoader />
-        ) : (
-          <View style={styles.container}>
-            {token ? <AppNavigator /> : <AuthNavigator />}
-          </View>
-        )}
+        <View style={styles.container}>
+          {token ? <AppNavigator /> : <AuthNavigator />}
+        </View>
       </KeyboardAvoidingView>
     </NavigationContainer>
   );

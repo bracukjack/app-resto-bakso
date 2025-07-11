@@ -27,6 +27,7 @@ import { Alert, Linking, RefreshControl, ScrollView, View } from "react-native";
 import { useSelector } from "react-redux";
 import MyLoader from "@/components/shared/Loader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ImagePreviewModal from "@/components/shared/ImagePreviewModal";
 
 type TransactionDetailProps = NativeStackScreenProps<
   RootStackParamList,
@@ -155,6 +156,9 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
             <Text className="text-black font-bold text-3xl">
               {transaction?.customerName}
             </Text>
+            <Text className="text-black font-bold text-lg">
+              No Tlp: {transaction?.customerPhone}
+            </Text>
           </View>
 
           <View className="flex flex-col justify-between items-center">
@@ -191,7 +195,7 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
             </Table>
           </View>
           <Text className="text-lg font-bold mb-5 mt-5 capitalize">
-            Alamat : {transaction?.customerName}
+            Alamat : {transaction?.customerAddress}
           </Text>
 
           <HStack className="flex flex-row gap-5 ">
@@ -208,12 +212,28 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
             )}
           </HStack>
 
-          <View className="flex flex-row gap-3 items-center w-full">
-            <Text className="text-lg mb-5 mt-5">Metode Pembayaran :</Text>
-            <Text className="text-xl font-bold mb-5 mt-5 text-cyan-600 capitalize w-full">
+          <View className="flex flex-row gap-3 items-center">
+            <Text className="text-lg mb-2 mt-2">Metode Pembayaran :</Text>
+            <Text className="text-xl font-bold mb-2 mt-2 text-cyan-600 capitalize">
               {transaction?.paymentMethod}
             </Text>
+            {transaction?.paymentMethod === "transfer" &&
+              (transaction?.buktiPembayaranUrl ? (
+                <Button size="xs" action="positive" disabled>
+                  <ButtonText>Dibayar</ButtonText>
+                </Button>
+              ) : (
+                <Button size="xs" action="negative" disabled>
+                  <ButtonText>Belum Bayar</ButtonText>
+                </Button>
+              ))}
           </View>
+
+          {transaction?.buktiPembayaranUrl && (
+            <HStack space="xl">
+              <ImagePreviewModal imageUrl={transaction?.buktiPembayaranUrl} />
+            </HStack>
+          )}
 
           <View className="flex flex-row gap-3 items-center justify-end">
             <Text className="text-xl font-bold mt-2">ONGKOS KIRIM :</Text>
@@ -234,18 +254,38 @@ const TransactionDetailScreen = ({ route }: TransactionDetailProps) => {
             </Text>
           </View>
 
+          {transaction?.paymentMethod === "transfer" && (
+            <VStack space="xl" className="mb-2">
+              {transaction?.status === StatusOrder.Pending &&
+                transaction.buktiPembayaranUrl === null && (
+                  <Button disabled variant="solid" className="bg-orange-500">
+                    <ButtonText> BELUM BAYAR </ButtonText>
+                  </Button>
+                )}
+
+              {transaction?.status === StatusOrder.Pending &&
+                transaction.buktiPembayaranUrl !== null && (
+                  <Button disabled variant="solid" className="bg-yellow-500">
+                    <ButtonText> MENUNGGU DITERIMA </ButtonText>
+                  </Button>
+                )}
+            </VStack>
+          )}
+
           {transaction?.status === StatusOrder.Pending && (
             <Grid className="w-full" _extra={{ className: "grid-cols-2" }}>
-              <GridItem _extra={{ className: "col-span-1" }}>
-                <Button
-                  onPress={() => openModal(StatusOrder.Accepted)}
-                  variant="solid"
-                  action="positive"
-                  className="mr-1"
-                >
-                  <ButtonText> TERIMA </ButtonText>
-                </Button>
-              </GridItem>
+              {transaction.buktiPembayaranUrl && (
+                <GridItem _extra={{ className: "col-span-1" }}>
+                  <Button
+                    onPress={() => openModal(StatusOrder.Accepted)}
+                    variant="solid"
+                    action="positive"
+                    className="mr-1"
+                  >
+                    <ButtonText> TERIMA </ButtonText>
+                  </Button>
+                </GridItem>
+              )}
 
               <GridItem _extra={{ className: "col-span-1" }}>
                 <Button

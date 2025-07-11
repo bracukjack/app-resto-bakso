@@ -22,6 +22,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
+import React from "react";
 
 const OnGoingListScreen = () => {
   const tableHeaders = ["Nama", "Order", "Total", "Status"];
@@ -136,7 +137,7 @@ const OnGoingListScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText className="text-[8px]">Diterima</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Rejected ? (
                       <Button
@@ -144,7 +145,7 @@ const OnGoingListScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText className="text-[8px]">Ditolak</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Completed ? (
                       <Button
@@ -152,7 +153,7 @@ const OnGoingListScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText className="text-[8px]">Berhasil</ButtonText>
                       </Button>
                     ) : item.status === StatusOrder.Complaint ? (
                       <Button
@@ -160,15 +161,40 @@ const OnGoingListScreen = () => {
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText className="text-[8px]">Komplin</ButtonText>
                       </Button>
+                    ) : item.paymentMethod === "transfer" ? (
+                      <>
+                        {item.status === StatusOrder.Pending &&
+                        item.buktiPembayaranUrl ? (
+                          <Button
+                            className="bg-blue-500 text-white px-2 rounded"
+                            size="xs"
+                            variant="solid"
+                          >
+                            <ButtonText className="text-[8px]">
+                              Dibayar
+                            </ButtonText>
+                          </Button>
+                        ) : (
+                          <Button
+                            className="bg-orange-500 text-white px-2 rounded"
+                            size="xs"
+                            variant="solid"
+                          >
+                            <ButtonText className="text-[8px]">
+                              Belum Bayar
+                            </ButtonText>
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <Button
                         className="bg-yellow-500 text-white px-2 rounded"
                         size="xs"
                         variant="solid"
                       >
-                        <ButtonText>{item.status}</ButtonText>
+                        <ButtonText className="text-[8px]">Menunggu</ButtonText>
                       </Button>
                     )}
                   </TableData>

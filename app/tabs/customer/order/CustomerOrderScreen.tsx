@@ -25,15 +25,15 @@ import { Promo } from "@/model/promo";
 import { Transfer } from "@/model/transfer";
 import { User } from "@/model/user";
 import ApiService from "@/service/apiService";
-import { RootState } from "@/store";
 import { formatRupiah } from "@/utils/formatCurrency";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ChevronDownIcon, Frown, Search, Smile } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl } from "react-native";
 import { Alert, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 const CustomerOrderScreen = () => {
   const [menu, setMenu] = useState<Product[]>([]);
   const [selectedOption, setSelectedOption] = useState<string>("");
@@ -192,61 +192,124 @@ const CustomerOrderScreen = () => {
         .filter((item) => quantities[item.id] > 0)
         .map((item) => ({
           produk_id: item.id,
+          nama: item.nama_produk,
           jumlah: quantities[item.id],
+          harga: item.harga,
         }));
-
-      // Pastikan setidaknya ada satu item yang dipesan
+      // Pastikan ada item yang dipesan
       if (items.length === 0) {
         alert(
           "Tidak ada produk yang dipesan. Silakan pilih minimal satu produk."
         );
         return;
       }
-
+      // Pastikan toko buka sebelum memproses pesanan
+      if (!isShopOpen) {
+        alert("Toko sedang tutup. Silakan pesan saat toko buka.");
+        return;
+      }
+      // Validasi pengiriman dan pembayaran
       const deliveryId = delivery.find(
         (d) => d.nama_daerah === profile?.kabupaten
       );
+      if (!selectedOption) {
+        alert("Silakan pilih metode pengiriman sebelum melanjutkan.");
+        return;
+      }
+      if (!selectedPaymentOption) {
+        alert("Silakan pilih metode pembayaran sebelum melanjutkan.");
+        return;
+      }
 
+      // Hitung total harga barang tanpa ongkir
+      const totalHargaBarang = items.reduce(
+        (total, item) => total + item.jumlah * item.harga,
+        0
+      );
+      // Jika ada promo, ongkir menjadi 0
+      const ongkirSetelahDiskon = isPromoApplied && truePromo ? 0 : hargaOngkir;
+      // Hitung total harga setelah ongkir (gratis jika ada promo)
+      const totalHarga = totalHargaBarang + ongkirSetelahDiskon;
+      // Buat teks daftar pesanan
+      const daftarPesanan = items
+        .map(
+          (item) =>
+            `• ${item.nama} x${item.jumlah} = Rp${(
+              item.jumlah * item.harga
+            ).toLocaleString()}`
+        )
+        .join("\n");
+
+      // Data untuk API
       const body = {
-        items: items,
+        items: items.map(({ nama, harga, ...rest }) => rest), // Hanya kirim data yang dibutuhkan
         delivery_id: deliveryId?.id,
         metode_pembayaran: selectedPaymentOption,
         pembeli_id: profile?.id,
         delivery_type: selectedOption,
         promo: truePromo,
+        ongkir: hargaOngkir,
+        total_harga: totalHarga,
       };
 
-      const response = await ApiService.post("/transaksi", body);
-
-      if (response.status === 200 || response.status === 201) {
-        Alert.alert("Order Sukses", "Cek pada Akun di Transaksi Berlangsung", [
+      // Konfirmasi sebelum mengirim pesanan
+      Alert.alert(
+        "Konfirmasi Pesanan",
+        `Apakah Anda yakin ingin membuat pesanan?\n\n${daftarPesanan}\n\nSubtotal: Rp${totalHargaBarang.toLocaleString()}\n${
+          isPromoApplied && truePromo
+            ? `Promo: **Gratis Ongkir**`
+            : `Ongkir: Rp${hargaOngkir.toLocaleString()}`
+        }\n\n**Total: Rp${totalHarga.toLocaleString()}**`,
+        [
           {
-            text: "OK",
-            onPress: () => {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "CustomerOrder" }],
-              });
+            text: "Tidak",
+            style: "cancel",
+          },
+          {
+            text: "Ya",
+            onPress: async () => {
+              try {
+                const response = await ApiService.post("/transaksi", body);
+                if (response.status === 200 || response.status === 201) {
+                  const transaksiId = response.data.data.id; // Dapatkan transaksi_id setelah pesanan berhasil
+
+                  Alert.alert(
+                    "Order Sukses",
+                    "Cek pada Akun di Transaksi Berlangsung",
+                    [
+                      {
+                        text: "OK",
+                        onPress: () => {
+                          navigation.reset({
+                            index: 0,
+                            routes: [{ name: "CustomerOrder" }],
+                          });
+                        },
+                      },
+                    ]
+                  );
+
+                  // Reset state setelah order berhasil
+                  setQuantities((prev) => {
+                    const newQuantities = { ...prev };
+                    menu.forEach((item) => (newQuantities[item.id] = 0)); // Reset quantity
+                    return newQuantities;
+                  });
+                  setIsPromoApplied(false);
+                  setPromoCode("");
+                  setTruePromo("");
+                  setSelectedOption(""); // Reset pengiriman
+                  setSelectedPaymentOption(""); // Reset pembayaran
+                } else {
+                  alert("Gagal memproses order. Silakan coba lagi.");
+                }
+              } catch (error) {
+                alert("Terjadi kesalahan saat memproses pesanan Anda");
+              }
             },
           },
-        ]);
-
-        // Reset state lokal
-        setQuantities((prevQuantities) => {
-          const newQuantities = { ...prevQuantities };
-          menu.forEach((item) => {
-            newQuantities[item.id] = 0; // Reset semua quantity ke 0
-          });
-          return newQuantities;
-        });
-        setIsPromoApplied(false);
-        setPromoCode("");
-        setTruePromo("");
-        setSelectedOption(""); // Reset opsi pengiriman
-        setSelectedPaymentOption(""); // Reset opsi pembayaran
-      } else {
-        alert("Gagal memproses order. Silakan coba lagi.");
-      }
+        ]
+      );
     } catch (error) {
       alert("Terjadi kesalahan saat memproses pesanan Anda");
     }
@@ -357,19 +420,20 @@ const CustomerOrderScreen = () => {
                     </SelectContent>
                   </SelectPortal>
                 </Select>
-
                 {selectedPaymentOption === "transfer" && (
-                  <View className="w-1/2">
+                  <VStack className="w-full">
                     <Text className="font-bold text-sm">
                       {transfer[0].nama_bank} : {transfer[0].nomor_rekening}
                     </Text>
                     <Text className="text-sm">A/N {transfer[0].atas_nama}</Text>
-                  </View>
+                  </VStack>
                 )}
               </HStack>
+
               {selectedPaymentOption === "transfer" && (
                 <Text className="text-sm text-medium text-red-600">
-                  Note : Konfirmasi bukti transfer di wa : 0812-XXXX-XXXX
+                  Note : Upload bukti transfer setelah sukses memesan, agar
+                  pesanan anda segera diproses
                 </Text>
               )}
 
@@ -411,11 +475,11 @@ const CustomerOrderScreen = () => {
 
               <Button
                 variant="solid"
-                action="positive"
+                action="primary"
                 className="mt-5"
                 onPress={submitOrder}
               >
-                <ButtonText>BUAT PESANAN</ButtonText>
+                <ButtonText className="tex-red-">BUAT PESANAN</ButtonText>
               </Button>
             </VStack>
           </VStack>

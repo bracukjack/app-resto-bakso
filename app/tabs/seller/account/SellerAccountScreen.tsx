@@ -97,22 +97,22 @@ const SellerAccountScreen = () => {
         />
       }
     >
-      <VStack className="w-full p-5 gap-5">
+      <VStack className="w-screen p-5 gap-5">
         <HStack className="items-center gap-2">
           <View className="p-2 bg-slate-200 rounded-full">
             <User2 color={"gray"} size={80} />
           </View>
-          <View>
-            <Text className="text-black font-medium text-base">
+          <View className="flex-1 w-full">
+            <Text className="text-black font-semibold text-base flex-wrap">
               {profile?.nama}
             </Text>
-            <Text className="text-black font-medium text-base">
+            <Text className="text-black font-normal text-base flex-wrap">
               {profile?.email}
             </Text>
-            <Text className="text-black font-medium text-base">
+            <Text className="text-black font-normal text-base flex-wrap">
               {profile?.alamat}
             </Text>
-            <Text className="text-black font-medium text-base">
+            <Text className="text-black font-semibold text-base flex-wrap">
               {profile?.telepon}
             </Text>
           </View>

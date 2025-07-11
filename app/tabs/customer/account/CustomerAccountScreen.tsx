@@ -101,21 +101,22 @@ const CustomerAccountScreen = () => {
           <View className="p-2 bg-slate-200 rounded-full">
             <User2 color={"gray"} size={80} />
           </View>
-          <View>
-            <Text className="text-black font-medium text-base">
+          <View className="flex-1 w-full">
+            <Text className="text-black font-semibold text-base flex-wrap">
               {profile?.nama}
             </Text>
-            <Text className="text-black font-medium text-base">
+            <Text className="text-black font-normal text-base flex-wrap">
               {profile?.email}
             </Text>
-            <Text className="text-black font-medium text-base">
-              {profile?.alamat} - {profile?.kabupaten}
+            <Text className="text-black font-normal text-base flex-wrap">
+              {profile?.alamat}
             </Text>
-            <Text className="text-black font-medium text-base">
+            <Text className="text-black font-semibold text-base flex-wrap">
               {profile?.telepon}
             </Text>
           </View>
         </HStack>
+
         <Divider className="my-0.5" />
         <MenuLink
           title={"EDIT PROFIL"}

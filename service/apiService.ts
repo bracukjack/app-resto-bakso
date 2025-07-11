@@ -68,6 +68,7 @@ class ApiService {
     return this.apiRequest(url, req);
   }
 
+
   static async put(url: string, data: {}, token: string) {
     const req = {
       method: "PUT",
